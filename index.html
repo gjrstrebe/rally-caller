@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100 font-sans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SvS Castle Rally Call & Multi-Threat Sync</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Chakra Petch', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .pulse-active {
+            animation: pulse-glow 1.2s infinite ease-out;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col p-3 sm:p-5 max-w-7xl mx-auto">
+
+    <!-- HEADER -->
+    <header class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-3">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-400">
+                <i class="fa-solid fa-chess-castle text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-display text-xl sm:text-2xl font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
+                    SvS Castle Rally Caller
+                </h1>
+                <p class="text-xs text-slate-400">Garrison Watcher Threat Queue & Staggered Counter Math</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="audio-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
+                <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
+                <span id="audio-status">Audio ON</span>
+            </button>
+            <button onclick="clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition">
+                <i class="fa-solid fa-trash-can mr-1"></i> Clear All
+            </button>
+        </div>
+    </header>
+
+    <!-- ACTION & TIMING PARAMETERS BAR -->
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl">
+        <button onclick="openModal()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-bold text-base border border-amber-300 shadow-lg shadow-amber-500/10 active:scale-95 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-plus text-lg"></i>
+            LOG INCOMING ENEMY RALLY
+        </button>
+
+        <!-- Global Timing Calibration Config -->
+        <div class="flex flex-wrap items-center gap-3 text-xs font-semibold">
+            <!-- Rally Prep -->
+            <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <span class="text-slate-400">Counter Prep:</span>
+                <button id="prep-3m-btn" onclick="setPrepTime(180)" class="px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-bold">3 Min</button>
+                <button id="prep-5m-btn" onclick="setPrepTime(300)" class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-xs font-bold">5 Min</button>
+            </div>
+
+            <!-- Inner Circle March Time -->
+            <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <span class="text-slate-400" title="Travel duration from Inner Ring city to Castle">Ring March:</span>
+                <div class="flex items-center gap-1">
+                    <button onclick="adjustMarchTime(-5)" class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 font-bold">-5s</button>
+                    <span id="march-time-display" class="text-amber-400 font-bold font-mono px-1">30s</span>
+                    <button onclick="adjustMarchTime(5)" class="px-1.5 py-0.5 rounded bg-slate-800 text-blue-400 font-bold">+5s</button>
+                </div>
+            </div>
+
+            <!-- Reaction / Human Buffer -->
+            <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <span class="text-slate-400" title="Buffer for UI taps and human reaction speed">Reaction Pad:</span>
+                <div class="flex items-center gap-1">
+                    <button onclick="adjustBufferTime(-1)" class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 font-bold">-1s</button>
+                    <span id="buffer-time-display" class="text-emerald-400 font-bold font-mono px-1">2s</span>
+                    <button onclick="adjustBufferTime(1)" class="px-1.5 py-0.5 rounded bg-slate-800 text-blue-400 font-bold">+1s</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN THREAT QUEUE FEED -->
+    <main class="flex-grow flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-list-ol text-amber-400"></i> Active Castle Threat Queue & Auto-Stagger Triggers
+            </h2>
+            <span id="threat-count-badge" class="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border border-slate-700">0 Active Rallies</span>
+        </div>
+
+        <div id="threat-feed" class="flex flex-col gap-4">
+            <!-- Empty state placeholder -->
+            <div id="empty-msg" class="text-center py-16 px-4 bg-slate-900/40 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="text-slate-300 font-semibold text-sm">No incoming enemy rallies logged</div>
+                <p class="text-xs text-slate-500 max-w-sm">Tap <span class="text-amber-400 font-semibold">"LOG INCOMING ENEMY RALLY"</span> whenever a watcher inside the Castle sees an enemy march timer.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- INPUT MODAL -->
+    <div id="threat-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+        <div class="glass-panel w-full max-w-lg rounded-2xl p-5 border-slate-700 shadow-2xl flex flex-col gap-5">
+            
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-display text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-radiation text-amber-400"></i> Log Incoming Castle Enemy Rally
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Preset Timers -->
+            <div class="flex flex-col gap-2">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Step 1: Select Base Enemy Arrival Time</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setModalBaseTime(300)" id="modal-btn-300" class="py-3 rounded-xl bg-slate-800 border border-slate-700 font-display font-bold text-lg text-white hover:bg-slate-700 transition">
+                        5:00 <span class="text-xs font-sans font-normal text-slate-400 block">Std Rally</span>
+                    </button>
+                    <button onclick="setModalBaseTime(180)" id="modal-btn-180" class="py-3 rounded-xl bg-slate-800 border border-slate-700 font-display font-bold text-lg text-white hover:bg-slate-700 transition">
+                        3:00 <span class="text-xs font-sans font-normal text-slate-400 block">Fast Rally</span>
+                    </button>
+                    <button onclick="setModalBaseTime(60)" id="modal-btn-60" class="py-3 rounded-xl bg-slate-800 border border-slate-700 font-display font-bold text-lg text-white hover:bg-slate-700 transition">
+                        1:00 <span class="text-xs font-sans font-normal text-slate-400 block">Short March</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fine-grain Nudge Display -->
+            <div class="flex flex-col gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Step 2: Calibrate to Exact Game Seconds</label>
+                <div class="flex items-center justify-between py-1">
+                    <div class="flex gap-1.5">
+                        <button onclick="nudgeModalTime(-10)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs">-10s</button>
+                        <button onclick="nudgeModalTime(-1)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs">-1s</button>
+                    </div>
+                    <div id="modal-timer-display" class="font-display text-3xl font-extrabold text-amber-400 tracking-wider">03:00</div>
+                    <div class="flex gap-1.5">
+                        <button onclick="nudgeModalTime(1)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold text-xs">+1s</button>
+                        <button onclick="nudgeModalTime(10)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold text-xs">+10s</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Strategy Selector -->
+            <div class="flex flex-col gap-2">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Step 3: Counter-Rally Strategy (2s Stagger)</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setModalTeamCount(1)" id="team-opt-1" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 font-bold text-xs text-slate-300 hover:bg-slate-700 transition">
+                        1 Team
+                    </button>
+                    <button onclick="setModalTeamCount(2)" id="team-opt-2" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 font-bold text-xs text-slate-300 hover:bg-slate-700 transition">
+                        2 Teams (2s gap)
+                    </button>
+                    <button onclick="setModalTeamCount(3)" id="team-opt-3" class="py-2.5 rounded-xl bg-amber-500 text-slate-950 border border-amber-400 font-bold text-xs transition">
+                        3 Teams (2s gap)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Confirm Button -->
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal()" class="w-1/3 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700">Cancel</button>
+                <button onclick="confirmAddThreat()" class="w-2/3 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-display font-bold text-sm border border-emerald-400 shadow-lg shadow-emerald-500/10">
+                    CONFIRM & START TIMERS
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        let counterRallyPrepSeconds = 180; // Default 3 minutes prep for counters
+        let marchTravelSeconds = 30;       // Default 30s inner circle travel time
+        let reactionBufferSeconds = 2;     // Default 2s UI tap delay buffer
+        
+        let audioEnabled = true;
+        let threats = [];
+        let masterInterval = null;
+        let announcedSignals = {};
+
+        // Modal State
+        let modalSeconds = 180;
+        let modalTeams = 3;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(freq = 880, duration = 0.15) {
+            if (!audioEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function speakCallout(text) {
+            if (!audioEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.rate = 1.15;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audio-icon');
+            const label = document.getElementById('audio-status');
+            if (audioEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-emerald-400';
+                label.innerText = 'Audio ON';
+                playBeep(600, 0.1);
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                label.innerText = 'Audio OFF';
+            }
+        }
+
+        function setPrepTime(seconds) {
+            counterRallyPrepSeconds = seconds;
+            document.getElementById('prep-3m-btn').className = seconds === 180 
+                ? 'px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-bold' 
+                : 'px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-xs font-bold';
+            document.getElementById('prep-5m-btn').className = seconds === 300 
+                ? 'px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-bold' 
+                : 'px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-xs font-bold';
+            updateDashboard();
+        }
+
+        function adjustMarchTime(delta) {
+            marchTravelSeconds = Math.max(5, marchTravelSeconds + delta);
+            document.getElementById('march-time-display').innerText = `${marchTravelSeconds}s`;
+            updateDashboard();
+        }
+
+        function adjustBufferTime(delta) {
+            reactionBufferSeconds = Math.max(0, reactionBufferSeconds + delta);
+            document.getElementById('buffer-time-display').innerText = `${reactionBufferSeconds}s`;
+            updateDashboard();
+        }
+
+        function openModal() {
+            modalSeconds = 180;
+            modalTeams = 3;
+            updateModalUI();
+            document.getElementById('threat-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('threat-modal').classList.add('hidden');
+        }
+
+        function setModalBaseTime(secs) {
+            modalSeconds = secs;
+            updateModalUI();
+        }
+
+        function nudgeModalTime(delta) {
+            modalSeconds = Math.max(5, modalSeconds + delta);
+            updateModalUI();
+        }
+
+        function setModalTeamCount(count) {
+            modalTeams = count;
+            updateModalUI();
+        }
+
+        function updateModalUI() {
+            const mins = Math.floor(modalSeconds / 60);
+            const secs = modalSeconds % 60;
+            document.getElementById('modal-timer-display').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            [300, 180, 60].forEach(t => {
+                const btn = document.getElementById(`modal-btn-${t}`);
+                if (btn) {
+                    if (modalSeconds === t) {
+                        btn.className = 'py-3 rounded-xl bg-amber-500 border border-amber-400 font-display font-bold text-lg text-slate-950 hover:bg-amber-400 transition';
+                    } else {
+                        btn.className = 'py-3 rounded-xl bg-slate-800 border border-slate-700 font-display font-bold text-lg text-white hover:bg-slate-700 transition';
+                    }
+                }
+            });
+
+            [1, 2, 3].forEach(c => {
+                const btn = document.getElementById(`team-opt-${c}`);
+                if (btn) {
+                    if (modalTeams === c) {
+                        btn.className = 'py-2.5 rounded-xl bg-amber-500 text-slate-950 border border-amber-400 font-bold text-xs transition';
+                    } else {
+                        btn.className = 'py-2.5 rounded-xl bg-slate-800 border border-slate-700 font-bold text-xs text-slate-300 hover:bg-slate-700 transition';
+                    }
+                }
+            });
+        }
+
+        function confirmAddThreat() {
+            const newThreat = {
+                id: Date.now() + Math.random(),
+                remaining: modalSeconds,
+                teamCount: modalTeams,
+                createdAt: new Date()
+            };
+
+            threats.push(newThreat);
+            playBeep(520, 0.1);
+
+            if (!masterInterval) {
+                masterInterval = setInterval(tick, 1000);
+            }
+
+            closeModal();
+            updateDashboard();
+        }
+
+        function nudgeThreat(threatId, delta) {
+            const t = threats.find(item => item.id === threatId);
+            if (t) {
+                t.remaining = Math.max(0, t.remaining + delta);
+                playBeep(delta > 0 ? 580 : 380, 0.08);
+                updateDashboard();
+            }
+        }
+
+        function removeThreat(threatId) {
+            threats = threats.filter(item => item.id !== threatId);
+            delete announcedSignals[threatId];
+            updateDashboard();
+        }
+
+        function clearAllThreats() {
+            threats = [];
+            announcedSignals = {};
+            if (masterInterval) {
+                clearInterval(masterInterval);
+                masterInterval = null;
+            }
+            updateDashboard();
+        }
+
+        function tick() {
+            if (threats.length === 0) {
+                clearInterval(masterInterval);
+                masterInterval = null;
+                updateDashboard();
+                return;
+            }
+
+            threats.forEach(t => {
+                if (t.remaining > 0) {
+                    t.remaining--;
+                }
+            });
+
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const feed = document.getElementById('threat-feed');
+            const emptyMsg = document.getElementById('empty-msg');
+            const countBadge = document.getElementById('threat-count-badge');
+
+            if (!feed) return;
+
+            countBadge.innerText = `${threats.length} Active Rallies`;
+
+            if (threats.length === 0) {
+                feed.innerHTML = '';
+                if (emptyMsg) {
+                    feed.appendChild(emptyMsg);
+                    emptyMsg.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (emptyMsg) {
+                emptyMsg.classList.add('hidden');
+            }
+            feed.innerHTML = '';
+
+            // Sort threats chronologically by impact time
+            const sorted = [...threats].sort((a, b) => a.remaining - b.remaining);
+
+            sorted.forEach((t, index) => {
+                const mins = Math.floor(t.remaining / 60);
+                const secs = t.remaining % 60;
+                const enemyTimerFormatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                const threatCard = document.createElement('div');
+                threatCard.className = 'glass-panel p-4 rounded-2xl border-slate-800 flex flex-col gap-4';
+
+                // Total Lead Time required: (Prep Time + March Travel - Buffer)
+                const totalLeadRequired = (counterRallyPrepSeconds + marchTravelSeconds) - reactionBufferSeconds;
+
+                let teamCardsHTML = '';
+                
+                for (let teamNum = 1; teamNum <= t.teamCount; teamNum++) {
+                    const staggerOffset = teamNum * 2;
+                    // Formula: Time Until Start = (Enemy Arrival - Total Lead Required) + Stagger Gap
+                    const timeUntilOpen = (t.remaining - totalLeadRequired) + staggerOffset;
+
+                    let statusBadgeHTML = '';
+                    let timerTextHTML = '';
+                    let cardBgStyle = 'bg-slate-900 border-slate-800';
+
+                    if (timeUntilOpen > 0) {
+                        const tm = Math.floor(timeUntilOpen / 60);
+                        const ts = timeUntilOpen % 60;
+                        const formattedOpen = `${String(tm).padStart(2, '0')}:${String(ts).padStart(2, '0')}`;
+                        
+                        statusBadgeHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-800/50">OPEN IN ${formattedOpen}</span>`;
+                        timerTextHTML = `<span class="font-mono font-bold text-blue-400">${formattedOpen}</span>`;
+                    } else if (timeUntilOpen >= -30) {
+                        statusBadgeHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950 pulse-active uppercase">OPEN RALLY NOW!</span>`;
+                        timerTextHTML = `<span class="font-mono font-bold text-emerald-400 animate-pulse">00:00</span>`;
+                        cardBgStyle = 'bg-emerald-950/40 border-emerald-500/50';
+
+                        const signalKey = `${t.id}_team_${teamNum}`;
+                        if (!announcedSignals[signalKey]) {
+                            playBeep(880, 0.3);
+                            speakCallout(`Team ${teamNum}, Open Rally Now!`);
+                            announcedSignals[signalKey] = true;
+                        }
+                    } else {
+                        statusBadgeHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">MARCH LAUNCHED</span>`;
+                        timerTextHTML = `<span class="font-mono text-slate-500">LAUNCHED</span>`;
+                    }
+
+                    teamCardsHTML += `
+                        <div class="p-3 rounded-xl border ${cardBgStyle} flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-display font-bold text-sm text-white">TEAM ${teamNum}</span>
+                                <span class="text-[10px] text-slate-500">(Land Target: +${staggerOffset}s)</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                ${statusBadgeHTML}
+                                <div class="text-right text-xs">
+                                    ${timerTextHTML}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                threatCard.innerHTML = `
+                    <!-- Top Bar of Threat Card -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 font-bold font-display text-xs flex items-center justify-center border border-amber-500/30">
+                                #${index + 1}
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-white flex items-center gap-2">
+                                    INCOMING CASTLE ENEMY RALLY
+                                </div>
+                                <div class="text-[10px] text-slate-400">
+                                    Math: <span class="text-slate-300 font-mono">${Math.floor(counterRallyPrepSeconds/60)}m Prep</span> + 
+                                    <span class="text-slate-300 font-mono">${marchTravelSeconds}s Travel</span> - 
+                                    <span class="text-slate-300 font-mono">${reactionBufferSeconds}s Pad</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enemy Impact Timer & Calibration -->
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Enemy Impact In</div>
+                                <div class="font-display text-xl font-extrabold text-amber-400">${enemyTimerFormatted}</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="nudgeThreat(${t.id}, 5)" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs font-bold">+5s</button>
+                                <button onclick="nudgeThreat(${t.id}, -5)" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold">-5s</button>
+                                <button onclick="removeThreat(${t.id})" class="px-2 py-1 rounded bg-red-950/40 hover:bg-red-900/60 text-red-400 text-xs ml-1">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Team Launch Signals -->
+                    <div class="grid grid-cols-1 md:grid-cols-${t.teamCount} gap-2">
+                        ${teamCardsHTML}
+                    </div>
+                `;
+
+                feed.appendChild(threatCard);
+            });
+        }
+    </script>
+</body>
+</html>
