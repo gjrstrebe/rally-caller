@@ -39,6 +39,14 @@
         .pulse-active {
             animation: pulse-glow 1.2s infinite ease-out;
         }
+        .flash-trigger {
+            animation: instant-flash 0.5s ease-out;
+        }
+        @keyframes instant-flash {
+            0% { transform: scale(0.96); filter: brightness(1.8); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
     </style>
 </head>
 <body class="h-full flex flex-col p-3 sm:p-5 max-w-7xl mx-auto">
@@ -67,6 +75,78 @@
             </button>
         </div>
     </header>
+
+    <!-- DYNAMIC ALLIANCE TAG CONFIGURATION BAR WITH PASSCODE LOCK -->
+    <div class="mb-3 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wide">
+            <i class="fa-solid fa-radio text-sm"></i>
+            <span>Team Callsigns & Alliance Suffixes:</span>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Team 1 / Alpha -->
+            <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
+                <span class="text-[11px] font-bold text-slate-300">Team Alpha</span>
+                <div id="tag-input-container-1">
+                    <!-- Dynamic Text or Input -->
+                </div>
+            </div>
+
+            <!-- Team 2 / Bravo -->
+            <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
+                <span class="text-[11px] font-bold text-slate-300">Team Bravo</span>
+                <div id="tag-input-container-2">
+                    <!-- Dynamic Text or Input -->
+                </div>
+            </div>
+
+            <!-- Team 3 / Charlie -->
+            <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
+                <span class="text-[11px] font-bold text-slate-300">Team Charlie</span>
+                <div id="tag-input-container-3">
+                    <!-- Dynamic Text or Input -->
+                </div>
+            </div>
+
+            <!-- Lock / Unlock Toggle Button -->
+            <button id="lock-btn" onclick="toggleLock()" class="text-[11px] font-semibold text-amber-400 px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/30 transition flex items-center gap-1.5">
+                <i id="lock-icon" class="fa-solid fa-lock text-xs"></i>
+                <span id="lock-label">Edit Labels</span>
+            </button>
+
+            <!-- Reset Button -->
+            <button onclick="resetDefaultTags()" class="text-[11px] font-semibold text-slate-400 hover:text-slate-200 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- INSTANT COMMAND DECK (DIRECT EMERGENCY DISPATCH) -->
+    <div class="mb-3 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-500/30 p-3 rounded-2xl flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> Instant Command Deck (Direct Manual Dispatch)
+            </span>
+            <span class="text-[10px] text-slate-400 italic">Bypasses queue timers — triggers immediate audio/visual alert</span>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button id="instant-btn-1" onclick="handleInstantCallout('team1')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase tracking-wider border border-emerald-400 shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-[#1] fa-bullhorn text-sm"></i>
+                <span id="instant-label-1">CALL ALPHA NOW</span>
+            </button>
+
+            <button id="instant-btn-2" onclick="handleInstantCallout('team2')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase tracking-wider border border-emerald-400 shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-[#2] fa-bullhorn text-sm"></i>
+                <span id="instant-label-2">CALL BRAVO NOW</span>
+            </button>
+
+            <button id="instant-btn-3" onclick="handleInstantCallout('team3')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase tracking-wider border border-emerald-400 shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-[#3] fa-bullhorn text-sm"></i>
+                <span id="instant-label-3">CALL CHARLIE NOW</span>
+            </button>
+        </div>
+    </div>
 
     <!-- ACTION & TIMING PARAMETERS BAR -->
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl">
@@ -201,6 +281,19 @@
 
     <!-- LOGIC SCRIPT -->
     <script>
+        // Data Models & Neutral Defaults
+        const STORAGE_KEY = 'svs_castle_teams_neutral_v1';
+        const DEFAULT_PASSCODE = 'WOS4336'; // Updated Authorization Passcode
+
+        const DEFAULT_CONFIG = {
+            team1: { codeName: "Alpha", allianceTag: "" },
+            team2: { codeName: "Bravo", allianceTag: "" },
+            team3: { codeName: "Charlie", allianceTag: "" }
+        };
+
+        let teamConfig = loadTeamConfig();
+        let isLocked = true; // Labels start locked by default to prevent accidental taps
+
         let counterRallyPrepSeconds = 180; // Default 3 minutes prep for counters
         let marchTravelSeconds = 30;       // Default 30s inner circle travel time
         let reactionBufferSeconds = 2;     // Default 2s UI tap delay buffer
@@ -210,11 +303,176 @@
         let masterInterval = null;
         let announcedSignals = {};
 
+        // Web Audio Context Singleton
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Real-Time Broadcast Channel for sync across open tabs/windows
+        const syncChannel = new BroadcastChannel('svs_rally_sync');
+
+        syncChannel.onmessage = (event) => {
+            if (event.data.type === 'UPDATE_CONFIG') {
+                teamConfig = event.data.teamConfig;
+                renderTagInputs();
+                updateDashboard();
+            } else if (event.data.type === 'UPDATE_THREATS') {
+                threats = event.data.threats;
+                if (threats.length > 0 && !masterInterval) {
+                    masterInterval = setInterval(tick, 1000);
+                }
+                updateDashboard();
+            } else if (event.data.type === 'INSTANT_CALLOUT') {
+                // Handle synchronized trigger from external watcher
+                triggerVisualFlashOverlay(event.data.teamKey);
+                playTeamAudioProfile(event.data.teamKey);
+            }
+        };
+
         // Modal State
         let modalSeconds = 180;
         let modalTeams = 3;
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // --- STANDALONE INSTANT DISPATCHER LOGIC ---
+        async function handleInstantCallout(teamKey) {
+            // 1. Resume Audio Context immediately on user gesture
+            if (audioCtx && audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            // 2. Clear lingering TTS queues
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            // 3. Trigger immediate local visual flash & audio alert
+            triggerVisualFlashOverlay(teamKey);
+            playTeamAudioProfile(teamKey);
+
+            // 4. Broadcast instant callout payload to connected client tabs
+            syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey });
+        }
+
+        function triggerVisualFlashOverlay(teamKey) {
+            const btnIndex = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+            const btn = document.getElementById(`instant-btn-${btnIndex}`);
+            if (btn) {
+                btn.classList.remove('flash-trigger');
+                void btn.offsetWidth; // Force reflow for re-triggering animation
+                btn.classList.add('flash-trigger');
+            }
+        }
+
+        function playTeamAudioProfile(teamKey) {
+            if (!audioEnabled) return;
+            playBeep(980, 0.25);
+            
+            const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+            speakCallout(teamNum);
+        }
+
+        // Load / Save Team Config
+        function loadTeamConfig() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return {
+                        team1: { codeName: "Alpha", allianceTag: (parsed.team1?.allianceTag || "").toUpperCase() },
+                        team2: { codeName: "Bravo", allianceTag: (parsed.team2?.allianceTag || "").toUpperCase() },
+                        team3: { codeName: "Charlie", allianceTag: (parsed.team3?.allianceTag || "").toUpperCase() }
+                    };
+                }
+            } catch (e) {}
+            return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        }
+
+        function saveTeamConfig() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(teamConfig));
+                syncChannel.postMessage({ type: 'UPDATE_CONFIG', teamConfig });
+            } catch (e) {}
+        }
+
+        function toggleLock() {
+            if (isLocked) {
+                const rawInput = prompt("Enter Watcher Passcode to Edit Labels:");
+                const sanitizedInput = (rawInput || "").trim().toUpperCase();
+                
+                if (sanitizedInput === DEFAULT_PASSCODE) {
+                    isLocked = false;
+                } else if (rawInput !== null) {
+                    alert("Incorrect Passcode!");
+                    return;
+                }
+            } else {
+                isLocked = true;
+            }
+            renderTagInputs();
+        }
+
+        function handleTagInput(teamKey, value) {
+            const cleanVal = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+            teamConfig[teamKey].allianceTag = cleanVal;
+            saveTeamConfig();
+            updateDashboard();
+        }
+
+        function resetDefaultTags() {
+            teamConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            saveTeamConfig();
+            renderTagInputs();
+            updateDashboard();
+        }
+
+        function renderTagInputs() {
+            const lockIcon = document.getElementById('lock-icon');
+            const lockLabel = document.getElementById('lock-label');
+            
+            if (isLocked) {
+                lockIcon.className = 'fa-solid fa-lock text-xs text-amber-400';
+                lockLabel.innerText = 'Edit Labels';
+            } else {
+                lockIcon.className = 'fa-solid fa-lock-open text-xs text-emerald-400';
+                lockLabel.innerText = 'Lock Labels';
+            }
+
+            [1, 2, 3].forEach(num => {
+                const teamKey = `team${num}`;
+                const container = document.getElementById(`tag-input-container-${num}`);
+                const tag = teamConfig[teamKey].allianceTag;
+
+                if (!container) return;
+
+                if (isLocked) {
+                    container.innerHTML = tag 
+                        ? `<span class="bg-amber-500/20 text-amber-400 font-display font-bold text-xs px-2 py-0.5 rounded border border-amber-500/30">(${tag})</span>`
+                        : `<span class="text-slate-600 italic text-[11px]">(No Tag)</span>`;
+                } else {
+                    container.innerHTML = `
+                        <input type="text" maxlength="4" placeholder="TAG" value="${tag}"
+                            oninput="handleTagInput('${teamKey}', this.value)"
+                            class="w-14 bg-slate-900 border border-slate-700 text-amber-400 font-display font-extrabold text-xs text-center rounded px-1 py-0.5 focus:outline-none focus:border-amber-400 uppercase tracking-wider">
+                    `;
+                }
+
+                // Update Instant Command Deck Labels dynamically
+                const instantBtnLabel = document.getElementById(`instant-label-${num}`);
+                const codeName = teamConfig[teamKey].codeName;
+                if (instantBtnLabel) {
+                    instantBtnLabel.innerText = tag 
+                        ? `CALL ${codeName.toUpperCase()} (${tag})` 
+                        : `CALL ${codeName.toUpperCase()}`;
+                }
+            });
+        }
+
+        function getTeamLabel(teamNum) {
+            const teamKey = `team${teamNum}`;
+            const config = teamConfig[teamKey];
+            if (!config) return `Team ${teamNum}`;
+            return config.allianceTag 
+                ? `Team ${config.codeName} (${config.allianceTag})` 
+                : `Team ${config.codeName}`;
+        }
 
         function playBeep(freq = 880, duration = 0.15) {
             if (!audioEnabled) return;
@@ -231,10 +489,20 @@
             } catch (e) {}
         }
 
-        function speakCallout(text) {
+        function speakCallout(teamNum) {
             if (!audioEnabled || !('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
+
+            const teamKey = `team${teamNum}`;
+            const config = teamConfig[teamKey];
+            const codeName = config?.codeName || `Team ${teamNum}`;
+            const tag = config?.allianceTag;
+            
+            const phrase = tag 
+                ? `Attention! ${codeName} Team ${tag}, Open Rally Now!`
+                : `Attention! ${codeName} Team, Open Rally Now!`;
+
+            const msg = new SpeechSynthesisUtterance(phrase);
+            msg.lang = 'en-US';
             msg.rate = 1.15;
             window.speechSynthesis.speak(msg);
         }
@@ -346,6 +614,7 @@
             }
 
             closeModal();
+            syncChannel.postMessage({ type: 'UPDATE_THREATS', threats });
             updateDashboard();
         }
 
@@ -354,6 +623,7 @@
             if (t) {
                 t.remaining = Math.max(0, t.remaining + delta);
                 playBeep(delta > 0 ? 580 : 380, 0.08);
+                syncChannel.postMessage({ type: 'UPDATE_THREATS', threats });
                 updateDashboard();
             }
         }
@@ -361,6 +631,7 @@
         function removeThreat(threatId) {
             threats = threats.filter(item => item.id !== threatId);
             delete announcedSignals[threatId];
+            syncChannel.postMessage({ type: 'UPDATE_THREATS', threats });
             updateDashboard();
         }
 
@@ -371,6 +642,7 @@
                 clearInterval(masterInterval);
                 masterInterval = null;
             }
+            syncChannel.postMessage({ type: 'UPDATE_THREATS', threats });
             updateDashboard();
         }
 
@@ -435,6 +707,10 @@
                     // Formula: Time Until Start = (Enemy Arrival - Total Lead Required) + Stagger Gap
                     const timeUntilOpen = (t.remaining - totalLeadRequired) + staggerOffset;
 
+                    const teamLabel = getTeamLabel(teamNum);
+                    const teamKey = `team${teamNum}`;
+                    const codeName = teamConfig[teamKey]?.codeName || `Alpha`;
+
                     let statusBadgeHTML = '';
                     let timerTextHTML = '';
                     let cardBgStyle = 'bg-slate-900 border-slate-800';
@@ -447,14 +723,14 @@
                         statusBadgeHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-800/50">OPEN IN ${formattedOpen}</span>`;
                         timerTextHTML = `<span class="font-mono font-bold text-blue-400">${formattedOpen}</span>`;
                     } else if (timeUntilOpen >= -30) {
-                        statusBadgeHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950 pulse-active uppercase">OPEN RALLY NOW!</span>`;
+                        statusBadgeHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950 pulse-active uppercase font-extrabold tracking-wide">${codeName.toUpperCase()} — OPEN RALLY NOW!</span>`;
                         timerTextHTML = `<span class="font-mono font-bold text-emerald-400 animate-pulse">00:00</span>`;
                         cardBgStyle = 'bg-emerald-950/40 border-emerald-500/50';
 
                         const signalKey = `${t.id}_team_${teamNum}`;
                         if (!announcedSignals[signalKey]) {
                             playBeep(880, 0.3);
-                            speakCallout(`Team ${teamNum}, Open Rally Now!`);
+                            speakCallout(teamNum);
                             announcedSignals[signalKey] = true;
                         }
                     } else {
@@ -465,7 +741,7 @@
                     teamCardsHTML += `
                         <div class="p-3 rounded-xl border ${cardBgStyle} flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="font-display font-bold text-sm text-white">TEAM ${teamNum}</span>
+                                <span class="font-display font-bold text-sm text-white">${teamLabel}</span>
                                 <span class="text-[10px] text-slate-500">(Land Target: +${staggerOffset}s)</span>
                             </div>
                             <div class="flex items-center gap-3">
@@ -522,6 +798,12 @@
                 feed.appendChild(threatCard);
             });
         }
+
+        // Initialize App Inputs
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTagInputs();
+            updateDashboard();
+        });
     </script>
 </body>
 </html>
