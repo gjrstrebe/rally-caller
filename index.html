@@ -356,6 +356,7 @@
                         castleOccupant = data.castleOccupant;
                         renderOccupantButtons();
                         renderActionCluster();
+                        renderInstantCommandDeck();
                     }
 
                     if (data.teamConfig) {
@@ -461,11 +462,28 @@
             castleOccupant = occupant;
             renderOccupantButtons();
             renderActionCluster();
+            renderInstantCommandDeck();
             if (currentUser) {
                 updateDoc(sessionDocRef, { castleOccupant: occupant }).catch(() => {});
             }
             syncChannel.postMessage({ type: 'SET_OCCUPANT', occupant });
             updateDashboard();
+        }
+
+        function renderInstantCommandDeck() {
+            const normalizedOccupant = (castleOccupant || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            [1, 2, 3].forEach(num => {
+                const btn = document.getElementById(`instant-btn-${num}`);
+                if (!btn) return;
+
+                const teamKey = `team${num}`;
+                if (normalizedOccupant === teamKey) {
+                    btn.classList.add('hidden');
+                } else {
+                    btn.classList.remove('hidden');
+                }
+            });
         }
 
         function renderOccupantButtons() {
@@ -866,6 +884,7 @@
 
         function updateDashboard() {
             renderOccupantButtons();
+            renderInstantCommandDeck();
 
             const feed = document.getElementById('threat-feed');
             const emptyMsg = document.getElementById('empty-msg');
@@ -986,6 +1005,7 @@
         window.toggleAudio = toggleAudio;
         window.clearAllThreats = clearAllThreats;
         window.setCastleOccupant = setCastleOccupant;
+        window.renderInstantCommandDeck = renderInstantCommandDeck;
         window.triggerExpelAllAlert = triggerExpelAllAlert;
         window.dismissExpelAlert = dismissExpelAlert;
         window.toggleLock = toggleLock;
