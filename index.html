@@ -278,6 +278,26 @@
         let lastHandledInstantTime = 0;
         let lastHandledExpelTime = 0;
 
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audio-icon');
+            const status = document.getElementById('audio-status');
+            const btn = document.getElementById('audio-btn');
+            
+            if (icon && status) {
+                if (audioEnabled) {
+                    icon.className = 'fa-solid fa-volume-high text-emerald-400';
+                    status.innerText = 'Audio ON';
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2';
+                    playBeep(880, 0.1);
+                } else {
+                    icon.className = 'fa-solid fa-volume-xmark text-red-400';
+                    status.innerText = 'Audio OFF';
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/30 hover:bg-red-900/40 text-red-300 border border-red-800/40 transition flex items-center gap-2';
+                }
+            }
+        }
+
         // Screen Wake Lock Handler
         let wakeLock = null;
         async function requestWakeLock() {
@@ -475,7 +495,10 @@
             `;
 
             ['team1', 'team2', 'team3'].forEach(teamKey => {
-                if (castleOccupant !== teamKey.toUpperCase()) {
+                const normalizedOccupant = castleOccupant.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normalizedKey = teamKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (normalizedOccupant !== normalizedKey) {
                     const label = getTeamLabel(teamKey);
                     html += `
                         <button onclick="window.spawnSingleRally('${teamKey.toUpperCase()}')" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-emerald-300 shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
@@ -506,6 +529,7 @@
 
         function renderExpelOverlay(active) {
             const el = document.getElementById('expel-hazard-screen');
+            if (!el) return;
             if (active) {
                 el.classList.remove('hidden');
                 if (audioEnabled) {
@@ -522,10 +546,32 @@
             }
         }
 
-        // Standalone Rally Spawner
+        function speakCallout(teamNum) {
+            if ('speechSynthesis' in window && audioEnabled) {
+                const teamKey = `team${teamNum}`;
+                const config = teamConfig[teamKey];
+                const tag = config?.allianceTag ? `Alliance ${config.allianceTag}` : '';
+                const codeName = config?.codeName || `Team ${teamNum}`;
+                const text = `Attention! ${codeName} ${tag}, Open Rally Now!`;
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Standalone Rally Spawner with Absolute Epoch Target Timestamps
         async function spawnSingleRally(rallyType) {
             requestWakeLock();
-            const threatId = Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+            const now = Date.now();
+            const threatId = now + "_" + Math.random().toString(36).substring(2, 7);
+
+            const prepDuration = 300; // 5 minutes default
+            const travelDuration = 30; // 30 seconds default
+
+            const prepTargetTime = now + (prepDuration * 1000);
+            const travelTargetTime = prepTargetTime + (travelDuration * 1000);
 
             const newThreat = {
                 threatId: threatId,
@@ -534,9 +580,10 @@
                 status: "ACTIVE",
                 autoPurgeSec: 15,
                 timer: {
-                    phase: "PREP_PHASE",
-                    prepSec: 300,
-                    travelSec: 30
+                    prepDurationSec: prepDuration,
+                    travelDurationSec: travelDuration,
+                    prepTargetTime: prepTargetTime,
+                    travelTargetTime: travelTargetTime
                 }
             };
 
@@ -708,59 +755,46 @@
             } catch (e) {}
         }
 
-        function speakCallout(teamNum) {
-            if (!audioEnabled || !('speechSynthesis' in window)) return;
-            const teamKey = `team${teamNum}`;
-            const config = teamConfig[teamKey];
-            const codeName = config?.codeName || `Team ${teamNum}`;
-            const tag = config?.allianceTag;
-            
-            const phrase = tag 
-                ? `Attention! ${codeName} Team ${tag}, Open Rally Now!`
-                : `Attention! ${codeName} Team, Open Rally Now!`;
-
-            const msg = new SpeechSynthesisUtterance(phrase);
-            msg.lang = 'en-US';
-            msg.rate = 1.15;
-            window.speechSynthesis.speak(msg);
-        }
-
-        function toggleAudio() {
-            audioEnabled = !audioEnabled;
-            const icon = document.getElementById('audio-icon');
-            const label = document.getElementById('audio-status');
-            if (audioEnabled) {
-                icon.className = 'fa-solid fa-volume-high text-emerald-400';
-                label.innerText = 'Audio ON';
-                playBeep(600, 0.1);
-            } else {
-                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
-                label.innerText = 'Audio OFF';
-            }
-        }
-
-        // Single-Rally Timer Nudge Functions
-        function nudgePrepTime(threatId, delta) {
+        // Single-Rally Timer Nudge Functions (Epoch Timestamp Shift)
+        function nudgePrepTime(threatId, deltaSec) {
             const t = threats.find(item => item.threatId === threatId);
             if (t) {
-                const newSec = Math.max(0, t.timer.prepSec + delta);
+                const shiftMs = deltaSec * 1000;
+                const now = Date.now();
+                const curPrepTarget = t.timer.prepTargetTime || (now + (t.timer.prepSec || 300) * 1000);
+                const curTravelTarget = t.timer.travelTargetTime || (curPrepTarget + (t.timer.travelSec || 30) * 1000);
+
+                const newPrepTarget = curPrepTarget + shiftMs;
+                const newTravelTarget = curTravelTarget + shiftMs;
+
                 if (currentUser) {
-                    updateDoc(doc(threatsCollRef, threatId), { "timer.prepSec": newSec }).catch(() => {});
+                    updateDoc(doc(threatsCollRef, threatId), {
+                        "timer.prepTargetTime": newPrepTarget,
+                        "timer.travelTargetTime": newTravelTarget
+                    }).catch(() => {});
                 } else {
-                    t.timer.prepSec = newSec;
+                    t.timer.prepTargetTime = newPrepTarget;
+                    t.timer.travelTargetTime = newTravelTarget;
                     updateDashboard();
                 }
             }
         }
 
-        function nudgeTravelTime(threatId, delta) {
+        function nudgeTravelTime(threatId, deltaSec) {
             const t = threats.find(item => item.threatId === threatId);
             if (t) {
-                const newSec = Math.max(0, t.timer.travelSec + delta);
+                const shiftMs = deltaSec * 1000;
+                const now = Date.now();
+                const curTravelTarget = t.timer.travelTargetTime || (now + (t.timer.travelSec || 30) * 1000);
+
+                const newTravelTarget = curTravelTarget + shiftMs;
+
                 if (currentUser) {
-                    updateDoc(doc(threatsCollRef, threatId), { "timer.travelSec": newSec }).catch(() => {});
+                    updateDoc(doc(threatsCollRef, threatId), {
+                        "timer.travelTargetTime": newTravelTarget
+                    }).catch(() => {});
                 } else {
-                    t.timer.travelSec = newSec;
+                    t.timer.travelTargetTime = newTravelTarget;
                     updateDashboard();
                 }
             }
@@ -802,19 +836,13 @@
                 return;
             }
 
+            const now = Date.now();
             threats.forEach(t => {
-                if (t.timer.phase === "PREP_PHASE") {
-                    if (t.timer.prepSec > 0) {
-                        t.timer.prepSec--;
-                    } else {
-                        t.timer.phase = "MARCH_PHASE";
-                    }
-                } else if (t.timer.phase === "MARCH_PHASE") {
-                    if (t.timer.travelSec > 0) {
-                        t.timer.travelSec--;
-                    } else {
-                        t.status = "IMPACT_COMPLETE";
-                    }
+                const travelTarget = t.timer.travelTargetTime || now;
+                
+                // If travel window reaches or passes zero, transition to IMPACT_COMPLETE
+                if (now >= travelTarget && t.status !== "IMPACT_COMPLETE") {
+                    t.status = "IMPACT_COMPLETE";
                 }
 
                 // 15-second Post-Impact Auto-Purge Lifecycle
@@ -858,9 +886,30 @@
             if (emptyMsg) emptyMsg.classList.add('hidden');
             feed.innerHTML = '';
 
+            const now = Date.now();
+
             threats.forEach((t, index) => {
                 const isEnemy = (t.rallyType === "ENEMY");
-                const totalTime = (t.timer.phase === "PREP_PHASE" ? t.timer.prepSec + t.timer.travelSec : t.timer.travelSec);
+                
+                // Dynamic time calculations relative to current epoch timestamp
+                const prepTarget = t.timer.prepTargetTime || (now + (t.timer.prepSec || 300) * 1000);
+                const travelTarget = t.timer.travelTargetTime || (prepTarget + (t.timer.travelSec || 30) * 1000);
+
+                const remainingPrepMs = prepTarget - now;
+                const remainingPrepSec = Math.max(0, Math.floor(remainingPrepMs / 1000));
+
+                const remainingTravelMs = travelTarget - now;
+                const remainingTravelSec = Math.max(0, Math.floor(remainingTravelMs / 1000));
+
+                const isPrepPhase = (remainingPrepSec > 0);
+                const totalRemainingSec = isPrepPhase 
+                    ? Math.max(0, Math.floor((travelTarget - now) / 1000))
+                    : remainingTravelSec;
+
+                const displayTravelSec = isPrepPhase 
+                    ? (t.timer.travelDurationSec || Math.floor((travelTarget - prepTarget) / 1000) || 30) 
+                    : remainingTravelSec;
+
                 const titleLabel = isEnemy ? "ENEMY RALLY" : `${getTeamLabel(t.rallyType).toUpperCase()} COUNTER RALLY`;
 
                 const themeBorder = isEnemy ? "border-red-500/40 bg-red-950/20" : "border-emerald-500/40 bg-emerald-950/20";
@@ -892,8 +941,8 @@
                         <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
                             <div>
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">Rally Prep Window</div>
-                                <div class="font-display text-2xl font-extrabold ${themeTitle} font-mono">${formatTime(t.timer.prepSec)}</div>
-                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${t.timer.phase === "PREP_PHASE" ? "Phase: Rally Building" : "Phase: Complete"}</div>
+                                <div class="font-display text-2xl font-extrabold ${themeTitle} font-mono">${formatTime(remainingPrepSec)}</div>
+                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${isPrepPhase ? "Phase: Rally Building" : "Phase: Complete"}</div>
                             </div>
                             <div class="flex items-center gap-1">
                                 <button onclick="window.nudgePrepTime('${t.threatId}', -5)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[10px] font-bold rounded">-5s</button>
@@ -907,8 +956,8 @@
                         <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
                             <div>
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">March Travel Window</div>
-                                <div class="font-mono text-2xl font-extrabold text-slate-200">${t.timer.travelSec}s</div>
-                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${t.timer.phase === "MARCH_PHASE" ? "Phase: Marching to Castle" : "Phase: Pending Launch"}</div>
+                                <div class="font-mono text-2xl font-extrabold text-slate-200">${displayTravelSec}s</div>
+                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${!isPrepPhase && remainingTravelSec > 0 ? "Phase: Marching to Castle" : isPrepPhase ? "Phase: Pending Launch" : "Phase: Arrived"}</div>
                             </div>
                             <div class="flex items-center gap-1">
                                 <button onclick="window.nudgeTravelTime('${t.threatId}', -5)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[10px] font-bold rounded">-5s</button>
@@ -925,7 +974,7 @@
                         <span class="text-slate-400 uppercase flex items-center gap-1.5">
                             <i class="fa-solid fa-circle-dot text-amber-400 text-[8px] animate-ping"></i> Target Castle Arrival:
                         </span>
-                        <span class="font-display text-base font-extrabold text-amber-400 font-mono">${formatTime(totalTime)}</span>
+                        <span class="font-display text-base font-extrabold text-amber-400 font-mono">${formatTime(totalRemainingSec)}</span>
                     </div>
                 `;
 
