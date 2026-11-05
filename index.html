@@ -307,6 +307,7 @@
         let masterInterval = null;
         let currentUser = null;
         let lastHandledInstantTime = 0;
+        let lastPlayedCalloutTimestamp = 0;
         let lastHandledExpelTime = 0;
 
         function toggleAudio() {
@@ -403,13 +404,16 @@
                     }
 
                     // Evaluate Instant Callout Event (Ignore events older than 10s on load)
-                    if (data.instantCallout && data.instantCallout.timestamp > lastHandledInstantTime) {
-                        const isInitialLoad = (lastHandledInstantTime === 0);
-                        lastHandledInstantTime = data.instantCallout.timestamp;
-                        if (!isInitialLoad && (Date.now() - data.instantCallout.timestamp < 10000)) {
-                            const action = data.instantCallout.action || "CALL";
-                            triggerVisualFlashOverlay(data.instantCallout.teamKey, action);
-                            playTeamAudioProfile(data.instantCallout.teamKey, action);
+                    if (data.instantCallout && data.instantCallout.timestamp) {
+                        const eventTime = data.instantCallout.timestamp;
+                        const isSelfTrigger = (eventTime === lastPlayedCalloutTimestamp);
+                        const isNewEvent = (eventTime > lastHandledInstantTime);
+                        const isFresh = (Date.now() - eventTime < 10000);
+
+                        if (isNewEvent && !isSelfTrigger && isFresh) {
+                            lastHandledInstantTime = eventTime;
+                            triggerVisualFlashOverlay(data.instantCallout.teamKey, data.instantCallout.action || "CALL");
+                            playTeamAudioProfile(data.instantCallout.teamKey, data.instantCallout.action || "CALL");
                         }
                     }
 
@@ -462,15 +466,19 @@
                 window.speechSynthesis.cancel();
             }
 
+            const calloutTime = Date.now();
+            lastPlayedCalloutTimestamp = calloutTime;
+            lastHandledInstantTime = calloutTime;
+
             triggerVisualFlashOverlay(teamKey, action);
             playTeamAudioProfile(teamKey, action);
 
             if (currentUser) {
                 updateDoc(sessionDocRef, {
-                    instantCallout: { teamKey, action, timestamp: Date.now() }
+                    instantCallout: { teamKey, action, timestamp: calloutTime }
                 }).catch(() => {});
             }
-            syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey, action });
+            syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey, action, timestamp: calloutTime });
         }
 
         function triggerVisualFlashOverlay(teamKey, action = "CALL") {
@@ -609,7 +617,7 @@
         function speakCallout(teamNum, action = "CALL") {
             if (!audioEnabled || !('speechSynthesis' in window)) return;
             
-            // Stop any currently playing audio speech queue
+            // Force flush pending speech synthesis queue to prevent double-playback
             window.speechSynthesis.cancel();
 
             const teamKey = `team${teamNum}`;
