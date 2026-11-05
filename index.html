@@ -607,26 +607,33 @@
         }
 
         function speakCallout(teamNum, action = "CALL") {
-            if ('speechSynthesis' in window && audioEnabled) {
-                const teamKey = `team${teamNum}`;
-                const config = teamConfig[teamKey];
-                const tag = config?.allianceTag ? `Alliance ${config.allianceTag}` : '';
-                const codeName = config?.codeName || `Team ${teamNum}`;
-                
-                let text = "";
-                if (action === "CANCEL") {
-                    text = tag 
-                        ? `Attention! Cancel ${codeName} ${tag} Rally Immediately! Abort March!`
-                        : `Attention! Cancel ${codeName} Rally Immediately! Abort March!`;
-                } else {
-                    text = `Attention! ${codeName} ${tag}, Open Rally Now!`;
-                }
-                
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-US';
-                utterance.rate = 1.15;
-                window.speechSynthesis.speak(utterance);
+            if (!audioEnabled || !('speechSynthesis' in window)) return;
+            
+            // Stop any currently playing audio speech queue
+            window.speechSynthesis.cancel();
+
+            const teamKey = `team${teamNum}`;
+            const config = teamConfig[teamKey];
+            const codeName = config?.codeName || `Team ${teamNum}`;
+            const tag = config?.allianceTag;
+
+            let phrase = "";
+            if (action === "CANCEL") {
+                phrase = tag 
+                    ? `Cancel ${codeName} ${tag}!`
+                    : `Cancel ${codeName}!`;
+            } else {
+                phrase = tag 
+                    ? `${codeName} ${tag}, Open Rally Now!`
+                    : `${codeName}, Open Rally Now!`;
             }
+
+            const msg = new SpeechSynthesisUtterance(phrase);
+            msg.lang = 'en-US';
+            msg.rate = 1.25; // Accelerated tactical cadence
+            msg.pitch = 1.0;
+            
+            window.speechSynthesis.speak(msg);
         }
 
         // Standalone Rally Spawner with Absolute Epoch Target Timestamps
@@ -978,13 +985,15 @@
                 const remainingTravelMs = travelTarget - now;
                 const remainingTravelSec = Math.max(0, Math.floor(remainingTravelMs / 1000));
 
+                // Live Adjusted Travel Duration (when in Prep Phase)
+                const totalTravelDurationSec = Math.max(0, Math.floor((travelTarget - prepTarget) / 1000));
+
+                // Dynamic Display Value based on Active Phase
                 const isPrepPhase = (remainingPrepSec > 0);
+                const displayTravelSec = isPrepPhase ? totalTravelDurationSec : remainingTravelSec;
+
                 const totalRemainingSec = isPrepPhase 
                     ? Math.max(0, Math.floor((travelTarget - now) / 1000))
-                    : remainingTravelSec;
-
-                const displayTravelSec = isPrepPhase 
-                    ? (t.timer.travelDurationSec || Math.floor((travelTarget - prepTarget) / 1000) || 30) 
                     : remainingTravelSec;
 
                 const titleLabel = isEnemy ? "ENEMY RALLY" : `${getTeamLabel(t.rallyType).toUpperCase()} COUNTER RALLY`;
