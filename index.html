@@ -309,6 +309,7 @@
         let lastHandledInstantTime = 0;
         let lastPlayedCalloutTimestamp = 0;
         let lastHandledExpelTime = 0;
+        let lastPlayedExpelTimestamp = 0;
 
         function toggleAudio() {
             audioEnabled = !audioEnabled;
@@ -418,10 +419,14 @@
                     }
 
                     // Evaluate Expel Alert Event
-                    if (data.expelAlert && data.expelAlert.timestamp > lastHandledExpelTime) {
-                        const isInitialLoad = (lastHandledExpelTime === 0);
-                        lastHandledExpelTime = data.expelAlert.timestamp;
-                        if (!isInitialLoad && data.expelAlert.active && (Date.now() - data.expelAlert.timestamp < 10000)) {
+                    if (data.expelAlert && data.expelAlert.timestamp) {
+                        const eventTime = data.expelAlert.timestamp;
+                        const isSelfTrigger = (eventTime === lastPlayedExpelTimestamp);
+                        const isNewEvent = (eventTime > lastHandledExpelTime);
+                        const isFresh = (Date.now() - eventTime < 10000);
+
+                        if (isNewEvent && !isSelfTrigger && data.expelAlert.active && isFresh) {
+                            lastHandledExpelTime = eventTime;
                             renderExpelOverlay(true);
                         }
                     }
@@ -581,11 +586,18 @@
         }
 
         function triggerExpelAllAlert() {
+            const alertTime = Date.now();
+            lastPlayedExpelTimestamp = alertTime;
+            lastHandledExpelTime = alertTime;
+
             renderExpelOverlay(true);
+
             if (currentUser) {
-                updateDoc(sessionDocRef, { expelAlert: { active: true, timestamp: Date.now() } }).catch(() => {});
+                updateDoc(sessionDocRef, { 
+                    expelAlert: { active: true, timestamp: alertTime } 
+                }).catch(() => {});
             }
-            syncChannel.postMessage({ type: 'EXPEL_ALERT' });
+            syncChannel.postMessage({ type: 'EXPEL_ALERT', timestamp: alertTime });
         }
 
         function dismissExpelAlert() {
@@ -601,11 +613,15 @@
             if (active) {
                 el.classList.remove('hidden');
                 if (audioEnabled) {
-                    playBeep(1200, 0.5);
+                    playBeep(1200, 0.4);
                     if ('speechSynthesis' in window) {
-                        const msg = new SpeechSynthesisUtterance("Attention! Expel all troops from Castle immediately!");
+                        window.speechSynthesis.cancel(); // Flush queue
+
+                        const msg = new SpeechSynthesisUtterance("Expel all troops from Castle now!");
                         msg.lang = 'en-US';
-                        msg.rate = 1.1;
+                        msg.rate = 1.25; // Accelerated speed
+                        msg.pitch = 1.0;
+
                         window.speechSynthesis.speak(msg);
                     }
                 }
