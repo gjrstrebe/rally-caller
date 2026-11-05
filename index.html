@@ -88,11 +88,21 @@
                 <h1 class="font-display text-xl sm:text-2xl font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
                     SvS Castle Telemetry Radar
                 </h1>
-                <p class="text-xs text-slate-400">Live Garrison Telemetry Mirror & Split Counter Radar</p>
+                <p class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5 mt-0.5">
+                    <span>Live Garrison Telemetry Mirror</span>
+                    <span class="text-slate-600">•</span>
+                    <a href="https://www.asktechdad.com" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:underline font-semibold">www.asktechdad.com</a>
+                    <span class="text-slate-600">•</span>
+                    <span class="text-slate-300 font-medium"><i class="fa-solid fa-handshake text-amber-400 mr-1"></i>Built in collaboration with ACE</span>
+                </p>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
+            <a href="https://ko-fi.com/asktechdad" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-mug-hot text-xs"></i>
+                <span>Support on Ko-fi</span>
+            </a>
             <button id="audio-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
                 <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
                 <span id="audio-status">Audio ON</span>
@@ -171,21 +181,42 @@
             <span class="text-[10px] text-slate-400 italic">Bypasses queue timers — triggers immediate audio/visual alert</span>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button id="instant-btn-1" onclick="handleInstantCallout('team1')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase tracking-wider border border-emerald-400 shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-bullhorn text-sm"></i>
-                <span id="instant-label-1">CALL TEAM 1 NOW</span>
-            </button>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Team 1 Controls -->
+            <div id="command-group-1" class="flex flex-col gap-1.5">
+                <button id="instant-btn-1" onclick="window.handleInstantCallout('team1', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bullhorn text-sm"></i>
+                    <span id="instant-label-1">CALL TEAM 1 NOW</span>
+                </button>
+                <button id="cancel-btn-1" onclick="window.handleInstantCallout('team1', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-ban text-xs"></i>
+                    <span id="cancel-label-1">CANCEL TEAM 1</span>
+                </button>
+            </div>
 
-            <button id="instant-btn-2" onclick="handleInstantCallout('team2')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase tracking-wider border border-emerald-400 shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-bullhorn text-sm"></i>
-                <span id="instant-label-2">CALL TEAM 2 NOW</span>
-            </button>
+            <!-- Team 2 Controls -->
+            <div id="command-group-2" class="flex flex-col gap-1.5">
+                <button id="instant-btn-2" onclick="window.handleInstantCallout('team2', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bullhorn text-sm"></i>
+                    <span id="instant-label-2">CALL TEAM 2 NOW</span>
+                </button>
+                <button id="cancel-btn-2" onclick="window.handleInstantCallout('team2', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-ban text-xs"></i>
+                    <span id="cancel-label-2">CANCEL TEAM 2</span>
+                </button>
+            </div>
 
-            <button id="instant-btn-3" onclick="handleInstantCallout('team3')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase tracking-wider border border-emerald-400 shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-bullhorn text-sm"></i>
-                <span id="instant-label-3">CALL TEAM 3 NOW</span>
-            </button>
+            <!-- Team 3 Controls -->
+            <div id="command-group-3" class="flex flex-col gap-1.5">
+                <button id="instant-btn-3" onclick="window.handleInstantCallout('team3', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bullhorn text-sm"></i>
+                    <span id="instant-label-3">CALL TEAM 3 NOW</span>
+                </button>
+                <button id="cancel-btn-3" onclick="window.handleInstantCallout('team3', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-ban text-xs"></i>
+                    <span id="cancel-label-3">CANCEL TEAM 3</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -376,8 +407,9 @@
                         const isInitialLoad = (lastHandledInstantTime === 0);
                         lastHandledInstantTime = data.instantCallout.timestamp;
                         if (!isInitialLoad && (Date.now() - data.instantCallout.timestamp < 10000)) {
-                            triggerVisualFlashOverlay(data.instantCallout.teamKey);
-                            playTeamAudioProfile(data.instantCallout.teamKey);
+                            const action = data.instantCallout.action || "CALL";
+                            triggerVisualFlashOverlay(data.instantCallout.teamKey, action);
+                            playTeamAudioProfile(data.instantCallout.teamKey, action);
                         }
                     }
 
@@ -417,12 +449,12 @@
                     initLocalFallbackMode();
                 });
             } catch (err) {
-                console.warn("Firebase subscription error, using local fallback mode:", err);
+                console.warn("Firestore subscription error:", err);
                 initLocalFallbackMode();
             }
         }
 
-        async function handleInstantCallout(teamKey) {
+        async function handleInstantCallout(teamKey, action = "CALL") {
             if (audioCtx && audioCtx.state === 'suspended') {
                 try { await audioCtx.resume(); } catch (e) {}
             }
@@ -430,19 +462,20 @@
                 window.speechSynthesis.cancel();
             }
 
-            triggerVisualFlashOverlay(teamKey);
-            playTeamAudioProfile(teamKey);
+            triggerVisualFlashOverlay(teamKey, action);
+            playTeamAudioProfile(teamKey, action);
 
             if (currentUser) {
                 updateDoc(sessionDocRef, {
-                    instantCallout: { teamKey, timestamp: Date.now() }
+                    instantCallout: { teamKey, action, timestamp: Date.now() }
                 }).catch(() => {});
             }
-            syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey });
+            syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey, action });
         }
 
-        function triggerVisualFlashOverlay(teamKey) {
-            const btnId = teamKey === 'team1' ? 'instant-btn-1' : teamKey === 'team2' ? 'instant-btn-2' : 'instant-btn-3';
+        function triggerVisualFlashOverlay(teamKey, action = "CALL") {
+            const num = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+            const btnId = action === "CANCEL" ? `cancel-btn-${num}` : `instant-btn-${num}`;
             const btn = document.getElementById(btnId);
             if (btn) {
                 btn.classList.add('flash-trigger');
@@ -450,11 +483,20 @@
             }
         }
 
-        function playTeamAudioProfile(teamKey) {
+        function playTeamAudioProfile(teamKey, action = "CALL") {
             if (!audioEnabled) return;
-            playBeep(980, 0.25);
+
+            if (action === "CANCEL") {
+                // Descending Cancel Chime
+                playBeep(440, 0.15);
+                setTimeout(() => playBeep(330, 0.25), 150);
+            } else {
+                // Ascending Call Chime
+                playBeep(980, 0.25);
+            }
+
             const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
-            speakCallout(teamNum);
+            speakCallout(teamNum, action);
         }
 
         // Occupant Selector
@@ -474,14 +516,14 @@
             const normalizedOccupant = (castleOccupant || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
             [1, 2, 3].forEach(num => {
-                const btn = document.getElementById(`instant-btn-${num}`);
-                if (!btn) return;
+                const group = document.getElementById(`command-group-${num}`);
+                if (!group) return;
 
                 const teamKey = `team${num}`;
                 if (normalizedOccupant === teamKey) {
-                    btn.classList.add('hidden');
+                    group.classList.add('hidden');
                 } else {
-                    btn.classList.remove('hidden');
+                    group.classList.remove('hidden');
                 }
             });
         }
@@ -564,17 +606,25 @@
             }
         }
 
-        function speakCallout(teamNum) {
+        function speakCallout(teamNum, action = "CALL") {
             if ('speechSynthesis' in window && audioEnabled) {
                 const teamKey = `team${teamNum}`;
                 const config = teamConfig[teamKey];
                 const tag = config?.allianceTag ? `Alliance ${config.allianceTag}` : '';
                 const codeName = config?.codeName || `Team ${teamNum}`;
-                const text = `Attention! ${codeName} ${tag}, Open Rally Now!`;
+                
+                let text = "";
+                if (action === "CANCEL") {
+                    text = tag 
+                        ? `Attention! Cancel ${codeName} ${tag} Rally Immediately! Abort March!`
+                        : `Attention! Cancel ${codeName} Rally Immediately! Abort March!`;
+                } else {
+                    text = `Attention! ${codeName} ${tag}, Open Rally Now!`;
+                }
                 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
-                utterance.rate = 1.0;
+                utterance.rate = 1.15;
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -740,11 +790,19 @@
                 }
 
                 const instantBtnLabel = document.getElementById(`instant-label-${num}`);
+                const cancelBtnLabel = document.getElementById(`cancel-label-${num}`);
                 const codeName = teamConfig[teamKey]?.codeName || `Team ${num}`;
+
                 if (instantBtnLabel) {
                     instantBtnLabel.innerText = tag 
                         ? `CALL ${codeName.toUpperCase()} (${tag})` 
                         : `CALL ${codeName.toUpperCase()}`;
+                }
+
+                if (cancelBtnLabel) {
+                    cancelBtnLabel.innerText = tag 
+                        ? `CANCEL ${codeName.toUpperCase()} (${tag})` 
+                        : `CANCEL ${codeName.toUpperCase()}`;
                 }
             });
         }
