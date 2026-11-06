@@ -113,6 +113,15 @@
         </div>
     </header>
 
+    <!-- GLOBAL FAST-RESET ALERT TICKER BANNER -->
+    <div id="global-alert-ticker" class="hidden mb-3 px-4 py-2 rounded-xl bg-amber-500/20 border-2 border-amber-400 text-amber-300 font-display font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-between transition-all">
+        <div class="flex items-center gap-2">
+            <i id="ticker-icon" class="fa-solid fa-bullhorn text-sm animate-pulse"></i>
+            <span id="ticker-text">NO RECENT DISPATCH</span>
+        </div>
+        <span class="text-[10px] text-amber-400/70 font-mono">LIVE DISPATCH</span>
+    </div>
+
     <!-- CASTLE OCCUPANT BAR & WHALE EXPEL BROADCAST -->
     <div class="mb-3 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border border-amber-500/30 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
@@ -494,11 +503,52 @@
             syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey, action, timestamp: calloutTime });
         }
 
+        function triggerGlobalTickerAlert(teamKey, action) {
+            const ticker = document.getElementById('global-alert-ticker');
+            const textEl = document.getElementById('ticker-text');
+            const iconEl = document.getElementById('ticker-icon');
+            if (!ticker || !textEl || !iconEl) return;
+
+            const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+            const label = getTeamLabel(`team${teamNum}`).toUpperCase();
+
+            // 1. Force instant CSS animation reset via reflow
+            ticker.classList.remove('flash-trigger', 'hidden');
+            void ticker.offsetWidth;
+
+            // 2. Set dynamic content & color themes
+            if (action === 'CANCEL') {
+                textEl.innerText = `🚫 DISPATCH: CANCEL ${label}!`;
+                ticker.className = "mb-3 px-4 py-2 rounded-xl bg-red-950/90 border-2 border-red-500 text-red-200 font-display font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-between flash-trigger";
+                iconEl.className = "fa-solid fa-ban text-sm text-red-400";
+            } else {
+                textEl.innerText = `⚡ DISPATCH: CALL ${label} NOW!`;
+                ticker.className = "mb-3 px-4 py-2 rounded-xl bg-emerald-950/90 border-2 border-emerald-400 text-emerald-200 font-display font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-between flash-trigger";
+                iconEl.className = "fa-solid fa-bullhorn text-sm text-emerald-400";
+            }
+
+            // 3. Auto-hide ticker after 4 seconds of idle
+            if (window.tickerTimeout) clearTimeout(window.tickerTimeout);
+            window.tickerTimeout = setTimeout(() => {
+                ticker.classList.add('hidden');
+            }, 4000);
+        }
+
         function triggerVisualFlashOverlay(teamKey, action = "CALL") {
-            const num = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
-            const btnId = action === "CANCEL" ? `cancel-btn-${num}` : `instant-btn-${num}`;
+            // Always trigger global ticker for ALL users
+            triggerGlobalTickerAlert(teamKey, action);
+
+            // Flash physical button ONLY if command deck is unlocked & visible
+            const isUnlocked = localStorage.getItem('commandDeckUnlocked') === 'true';
+            if (!isUnlocked) return;
+
+            const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+            const btnId = action === "CANCEL" ? `cancel-btn-${teamNum}` : `instant-btn-${teamNum}`;
             const btn = document.getElementById(btnId);
+
             if (btn) {
+                btn.classList.remove('flash-trigger');
+                void btn.offsetWidth; // Force instant animation restart on spam
                 btn.classList.add('flash-trigger');
                 setTimeout(() => btn.classList.remove('flash-trigger'), 600);
             }
