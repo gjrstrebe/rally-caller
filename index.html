@@ -427,10 +427,18 @@
                         const isNewEvent = (eventTime > lastHandledInstantTime);
                         const isFresh = (Date.now() - eventTime < 10000);
 
-                        if (isNewEvent && !isSelfTrigger && isFresh) {
+                        if (isNewEvent && isFresh) {
                             lastHandledInstantTime = eventTime;
-                            triggerHeaderAlertPulse();
-                            playTeamAudioProfile(data.instantCallout.teamKey, data.instantCallout.action || "CALL");
+                            const teamKey = data.instantCallout.teamKey;
+                            const action = data.instantCallout.action || "CALL";
+
+                            // 1. ALWAYS trigger visual feedback (banner + button flash if visible)
+                            triggerVisualFlashOverlay(teamKey, action);
+
+                            // 2. Trigger audio callout ONLY if not self-initiated (prevents local echo)
+                            if (!isSelfTrigger) {
+                                playTeamAudioProfile(teamKey, action);
+                            }
                         }
                     }
 
@@ -512,11 +520,10 @@
             const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
             const label = getTeamLabel(`team${teamNum}`).toUpperCase();
 
-            // 1. Strip hidden class & force instant CSS animation restart
+            // Hard reset CSS animation class
             ticker.classList.remove('hidden', 'flash-trigger');
-            void ticker.offsetWidth; // Force browser DOM reflow
+            void ticker.offsetWidth; // Force instant browser reflow
 
-            // 2. Apply theme colors & text based on action
             if (action === 'CANCEL') {
                 textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-red-950/95 border-2 border-red-500 text-red-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
@@ -527,7 +534,6 @@
                 iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
             }
 
-            // 3. Reset auto-hide timer (4.5 seconds of inactivity)
             if (window.tickerTimeout) clearTimeout(window.tickerTimeout);
             window.tickerTimeout = setTimeout(() => {
                 ticker.classList.add('hidden');
@@ -535,20 +541,18 @@
         }
 
         function triggerVisualFlashOverlay(teamKey, action = "CALL") {
-            // 1. ALWAYS fire the universal ticker banner for ALL devices & lock states
+            // 1. ALWAYS fire universal banner HUD on ALL connected devices
             triggerGlobalTickerAlert(teamKey, action);
 
-            // 2. Flash physical button ONLY if command deck is unlocked & visible
-            const isUnlocked = (localStorage.getItem('commandDeckUnlocked') === 'true');
-            if (!isUnlocked) return;
-
+            // 2. Target physical button for visual flash
             const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
             const btnId = action === "CANCEL" ? `cancel-btn-${teamNum}` : `instant-btn-${teamNum}`;
             const btn = document.getElementById(btnId);
 
-            if (btn) {
+            // If button exists and its parent container is NOT hidden, trigger flash animation
+            if (btn && btn.offsetParent !== null) {
                 btn.classList.remove('flash-trigger');
-                void btn.offsetWidth; // Force instant animation restart
+                void btn.offsetWidth; // Reflow reset
                 btn.classList.add('flash-trigger');
                 setTimeout(() => btn.classList.remove('flash-trigger'), 600);
             }
