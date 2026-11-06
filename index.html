@@ -113,13 +113,13 @@
         </div>
     </header>
 
-    <!-- GLOBAL FAST-RESET ALERT TICKER BANNER -->
-    <div id="global-alert-ticker" class="hidden mb-3 px-4 py-2 rounded-xl bg-amber-500/20 border-2 border-amber-400 text-amber-300 font-display font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-between transition-all">
-        <div class="flex items-center gap-2">
+    <!-- UNIVERSAL ALERT TICKER BANNER -->
+    <div id="global-alert-ticker" class="hidden mb-3 px-4 py-2.5 rounded-xl bg-slate-900 border-2 border-amber-400 text-amber-300 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-xl flex items-center justify-between transition-all">
+        <div class="flex items-center gap-2.5">
             <i id="ticker-icon" class="fa-solid fa-bullhorn text-sm animate-pulse"></i>
             <span id="ticker-text">NO RECENT DISPATCH</span>
         </div>
-        <span class="text-[10px] text-amber-400/70 font-mono">LIVE DISPATCH</span>
+        <span class="text-[10px] text-amber-400/70 font-mono tracking-widest hidden sm:inline">LIVE DISPATCH</span>
     </div>
 
     <!-- CASTLE OCCUPANT BAR & WHALE EXPEL BROADCAST -->
@@ -503,7 +503,7 @@
             syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey, action, timestamp: calloutTime });
         }
 
-        function triggerGlobalTickerAlert(teamKey, action) {
+        function triggerGlobalTickerAlert(teamKey, action = "CALL") {
             const ticker = document.getElementById('global-alert-ticker');
             const textEl = document.getElementById('ticker-text');
             const iconEl = document.getElementById('ticker-icon');
@@ -512,34 +512,34 @@
             const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
             const label = getTeamLabel(`team${teamNum}`).toUpperCase();
 
-            // 1. Force instant CSS animation reset via reflow
-            ticker.classList.remove('flash-trigger', 'hidden');
-            void ticker.offsetWidth;
+            // 1. Strip hidden class & force instant CSS animation restart
+            ticker.classList.remove('hidden', 'flash-trigger');
+            void ticker.offsetWidth; // Force browser DOM reflow
 
-            // 2. Set dynamic content & color themes
+            // 2. Apply theme colors & text based on action
             if (action === 'CANCEL') {
-                textEl.innerText = `🚫 DISPATCH: CANCEL ${label}!`;
-                ticker.className = "mb-3 px-4 py-2 rounded-xl bg-red-950/90 border-2 border-red-500 text-red-200 font-display font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-between flash-trigger";
-                iconEl.className = "fa-solid fa-ban text-sm text-red-400";
+                textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
+                ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-red-950/95 border-2 border-red-500 text-red-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
+                iconEl.className = "fa-solid fa-ban text-base text-red-400 animate-pulse";
             } else {
-                textEl.innerText = `⚡ DISPATCH: CALL ${label} NOW!`;
-                ticker.className = "mb-3 px-4 py-2 rounded-xl bg-emerald-950/90 border-2 border-emerald-400 text-emerald-200 font-display font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-between flash-trigger";
-                iconEl.className = "fa-solid fa-bullhorn text-sm text-emerald-400";
+                textEl.innerText = `⚡ DISPATCH: ${label} - OPEN RALLY NOW!`;
+                ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-emerald-950/95 border-2 border-emerald-400 text-emerald-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
+                iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
             }
 
-            // 3. Auto-hide ticker after 4 seconds of idle
+            // 3. Reset auto-hide timer (4.5 seconds of inactivity)
             if (window.tickerTimeout) clearTimeout(window.tickerTimeout);
             window.tickerTimeout = setTimeout(() => {
                 ticker.classList.add('hidden');
-            }, 4000);
+            }, 4500);
         }
 
         function triggerVisualFlashOverlay(teamKey, action = "CALL") {
-            // Always trigger global ticker for ALL users
+            // 1. ALWAYS fire the universal ticker banner for ALL devices & lock states
             triggerGlobalTickerAlert(teamKey, action);
 
-            // Flash physical button ONLY if command deck is unlocked & visible
-            const isUnlocked = localStorage.getItem('commandDeckUnlocked') === 'true';
+            // 2. Flash physical button ONLY if command deck is unlocked & visible
+            const isUnlocked = (localStorage.getItem('commandDeckUnlocked') === 'true');
             if (!isUnlocked) return;
 
             const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
@@ -548,7 +548,7 @@
 
             if (btn) {
                 btn.classList.remove('flash-trigger');
-                void btn.offsetWidth; // Force instant animation restart on spam
+                void btn.offsetWidth; // Force instant animation restart
                 btn.classList.add('flash-trigger');
                 setTimeout(() => btn.classList.remove('flash-trigger'), 600);
             }
