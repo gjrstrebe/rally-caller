@@ -73,30 +73,43 @@
                 <i class="fa-solid fa-chess-castle text-xl"></i>
             </div>
             <div>
-                <h1 class="font-display text-xl sm:text-2xl font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
+                <h1 id="ui-app-title" class="font-display text-xl sm:text-2xl font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
                     SvS Castle Telemetry Radar
                 </h1>
                 <p class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5 mt-0.5">
-                    <span>Live Garrison Telemetry Mirror</span>
+                    <span id="ui-app-subtitle">Live Garrison Telemetry Mirror</span>
                     <span class="text-slate-600">•</span>
                     <a href="https://www.asktechdad.com" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:underline font-semibold">www.asktechdad.com</a>
                     <span class="text-slate-600">•</span>
-                    <span class="text-slate-300 font-medium"><i class="fa-solid fa-handshake text-amber-400 mr-1"></i>Built in collaboration with ACE</span>
+                    <span class="text-slate-300 font-medium"><i class="fa-solid fa-handshake text-amber-400 mr-1"></i><span id="ui-credit-ace">Built in collaboration with ACE</span></span>
                 </p>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
+            <!-- DYNAMIC LANGUAGE SELECTOR DROPDOWN -->
+            <div class="relative">
+                <select id="lang-selector" onchange="window.setLanguage(this.value)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 focus:outline-none focus:border-amber-400 transition cursor-pointer">
+                    <option value="auto">🌐 Auto (System)</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="zh-tw">🇹🇼 繁體中文 (Taiwan)</option>
+                    <option value="zh">🇨🇳 简体中文</option>
+                    <option value="hr">🇭🇷 Hrvatski</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="ko">🇰🇷 한국어</option>
+                </select>
+            </div>
+
             <a href="https://ko-fi.com/asktechdad" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-mug-hot text-xs"></i>
-                <span>Support on Ko-fi</span>
+                <span id="ui-kofi-btn">Support on Ko-fi</span>
             </a>
             <button id="audio-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
                 <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
                 <span id="audio-status">Audio ON</span>
             </button>
             <button onclick="clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition">
-                <i class="fa-solid fa-trash-can mr-1"></i> Clear All
+                <i class="fa-solid fa-trash-can mr-1"></i> <span id="ui-clear-all-btn">Clear All</span>
             </button>
         </div>
     </header>
@@ -107,14 +120,14 @@
             <i id="ticker-icon" class="fa-solid fa-bullhorn text-sm animate-pulse"></i>
             <span id="ticker-text">NO RECENT DISPATCH</span>
         </div>
-        <span class="text-[10px] text-amber-400/70 font-mono tracking-widest hidden sm:inline">LIVE DISPATCH</span>
+        <span id="ui-live-dispatch-tag" class="text-[10px] text-amber-400/70 font-mono tracking-widest hidden sm:inline">LIVE DISPATCH</span>
     </div>
 
     <!-- CASTLE OCCUPANT BAR & WHALE EXPEL BROADCAST -->
     <div class="mb-3 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border border-amber-500/30 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
             <span class="text-xs font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
-                <i class="fa-solid fa-shield-cat"></i> Castle Occupant:
+                <i class="fa-solid fa-shield-cat"></i> <span id="ui-occupant-label">Castle Occupant:</span>
             </span>
             <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                 <button id="occupant-ENEMY" onclick="setCastleOccupant('ENEMY')" class="px-3 py-1 rounded-lg text-xs font-bold transition">ENEMY</button>
@@ -128,13 +141,13 @@
             <!-- CASTLE SWAP BROADCAST BUTTON -->
             <button onclick="window.triggerCastleSwapAlert()" class="px-3.5 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-yellow-300 shadow-md active:scale-95 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-rotate text-sm"></i>
-                <span>CASTLE SWAP</span>
+                <span id="ui-btn-castle-swap">CASTLE SWAP</span>
             </button>
 
             <!-- REFACTORED EXPEL BUTTON (NO FULL SCREEN OVERLAY) -->
             <button onclick="window.triggerExpelAllAlert()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-amber-300 shadow-md active:scale-95 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-triangle-exclamation text-sm"></i>
-                <span>NOTIFY: EXPEL ALL</span>
+                <span id="ui-btn-notify-expel">NOTIFY: EXPEL ALL</span>
             </button>
         </div>
     </div>
@@ -143,25 +156,25 @@
     <div class="mb-3 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wide">
             <i class="fa-solid fa-radio text-sm"></i>
-            <span>Team Callsigns & Alliance Suffixes:</span>
+            <span id="ui-callsigns-label">Team Callsigns & Alliance Suffixes:</span>
         </div>
         
         <div class="flex flex-wrap items-center gap-3">
             <!-- Team 1 -->
             <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
-                <span class="text-[11px] font-bold text-slate-300">Team 1</span>
+                <span id="ui-team-1-hdr" class="text-[11px] font-bold text-slate-300">Team 1</span>
                 <div id="tag-input-container-1"></div>
             </div>
 
             <!-- Team 2 -->
             <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
-                <span class="text-[11px] font-bold text-slate-300">Team 2</span>
+                <span id="ui-team-2-hdr" class="text-[11px] font-bold text-slate-300">Team 2</span>
                 <div id="tag-input-container-2"></div>
             </div>
 
             <!-- Team 3 -->
             <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
-                <span class="text-[11px] font-bold text-slate-300">Team 3</span>
+                <span id="ui-team-3-hdr" class="text-[11px] font-bold text-slate-300">Team 3</span>
                 <div id="tag-input-container-3"></div>
             </div>
 
@@ -173,7 +186,7 @@
 
             <!-- Reset Button -->
             <button onclick="resetDefaultTags()" class="text-[11px] font-semibold text-slate-400 hover:text-slate-200 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1">
-                <i class="fa-solid fa-rotate-left"></i> Reset
+                <i class="fa-solid fa-rotate-left"></i> <span id="ui-reset-btn">Reset</span>
             </button>
         </div>
     </div>
@@ -182,7 +195,7 @@
     <div class="mb-3 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-500/30 p-3 rounded-2xl flex flex-col gap-2">
         <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-2">
-                <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> Instant Command Deck (Direct Manual Dispatch)
+                <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> <span id="ui-command-deck-title">Instant Command Deck (Direct Manual Dispatch)</span>
             </span>
             <button id="deck-lock-btn" onclick="window.toggleCommandDeckLock()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5">
                 <i id="deck-lock-icon" class="fa-solid fa-lock text-xs"></i>
@@ -235,7 +248,7 @@
     <div class="mb-5 flex flex-col gap-2">
         <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl flex flex-col gap-2">
             <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-layer-group text-amber-400"></i> Log Standalone Rally:
+                <i class="fa-solid fa-layer-group text-amber-400"></i> <span id="ui-log-standalone-title">Log Standalone Rally:</span>
             </div>
             <div id="action-cluster-bar" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <!-- Action Buttons Rendered Dynamically via renderActionCluster() -->
@@ -243,9 +256,9 @@
         </div>
 
         <div id="undo-toast" class="hidden px-4 py-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 text-xs font-bold flex items-center justify-between gap-3">
-            <span>Rally Logged!</span>
+            <span id="ui-rally-logged-toast">Rally Logged!</span>
             <button onclick="undoLastLog()" class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-extrabold hover:bg-amber-400 transition flex items-center gap-1">
-                <i class="fa-solid fa-rotate-left"></i> Undo
+                <i class="fa-solid fa-rotate-left"></i> <span id="ui-undo-btn">Undo</span>
             </button>
         </div>
     </div>
@@ -254,7 +267,7 @@
     <main class="flex-grow flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <i class="fa-solid fa-radar text-amber-400"></i> Active Telemetry Radar & Standalone Rally Cards
+                <i class="fa-solid fa-radar text-amber-400"></i> <span id="ui-radar-feed-title">Active Telemetry Radar & Standalone Rally Cards</span>
             </h2>
             <span id="threat-count-badge" class="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border border-slate-700">0 Active Rallies</span>
         </div>
@@ -265,8 +278,8 @@
                 <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-xl">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <div class="text-slate-300 font-semibold text-sm">No incoming enemy or friendly rallies logged</div>
-                <p class="text-xs text-slate-500 max-w-sm">Use the action buttons above to log an Enemy or Friendly Counter Rally card.</p>
+                <div id="ui-no-rallies-msg" class="text-slate-300 font-semibold text-sm">No incoming enemy or friendly rallies logged</div>
+                <p id="ui-no-rallies-sub" class="text-xs text-slate-500 max-w-sm">Use the action buttons above to log an Enemy or Friendly Counter Rally card.</p>
             </div>
         </div>
     </main>
@@ -296,6 +309,327 @@
         // Firestore Paths & Document References
         const sessionDocRef = doc(db, "sessions", "svs_castle_live");
         const threatsCollRef = collection(db, "sessions", "svs_castle_live", "threats");
+
+        // UI & AUDIO INTERNATIONALIZATION DICTIONARY
+        const I18N_DICTIONARY = {
+            en: {
+                appTitle: "SvS Castle Telemetry Radar",
+                appSubtitle: "Live Garrison Telemetry Mirror",
+                creditAce: "Built in collaboration with ACE",
+                kofiBtn: "Support on Ko-fi",
+                audioOn: "Audio ON",
+                audioOff: "Audio OFF",
+                clearAll: "Clear All",
+                liveDispatch: "LIVE DISPATCH",
+                occupantLabel: "Castle Occupant:",
+                castleSwapBtn: "CASTLE SWAP",
+                notifyExpelBtn: "NOTIFY: EXPEL ALL",
+                callsignsLabel: "Team Callsigns & Alliance Suffixes:",
+                editLabels: "Edit Labels",
+                lockLabels: "Lock Labels",
+                resetBtn: "Reset",
+                commandDeckTitle: "Instant Command Deck (Direct Manual Dispatch)",
+                unlockCommands: "UNLOCK COMMANDS",
+                lockDeck: "LOCK DECK",
+                logRallyTitle: "Log Standalone Rally:",
+                logEnemyRally: "LOG ENEMY RALLY",
+                logCounterRally: (team) => `LOG ${team} RALLY`,
+                callTeamNow: (team) => `CALL ${team} NOW`,
+                cancelTeam: (team) => `CANCEL ${team}`,
+                rallyLoggedToast: "Rally Logged!",
+                undoBtn: "Undo",
+                radarFeedTitle: "Active Telemetry Radar & Standalone Rally Cards",
+                activeRallies: (count) => `${count} Active Rallies`,
+                noRalliesMsg: "No incoming enemy or friendly rallies logged",
+                noRalliesSub: "Use the action buttons above to log an Enemy or Friendly Counter Rally card.",
+                enemyRally: "ENEMY RALLY",
+                counterRally: (team) => `${team} COUNTER RALLY`,
+                prepWindow: "Rally Prep Window",
+                marchWindow: "March Travel Window",
+                targetImpact: "Target Castle Arrival:",
+                phaseBuilding: "Phase: Rally Building",
+                phaseComplete: "Phase: Complete",
+                phaseMarching: "Phase: Marching to Castle",
+                phasePending: "Phase: Pending Launch",
+                phaseArrived: "Phase: Arrived",
+                landedPurging: (sec) => `⚔️ LANDED — PURGING IN ${sec}s`
+            },
+            'zh-tw': {
+                appTitle: "SvS 城堡戰術雷達",
+                appSubtitle: "駐軍即時數據鏡像",
+                creditAce: "與 ACE 團隊聯合製作",
+                kofiBtn: "贊助 Ko-fi",
+                audioOn: "音效 開啟",
+                audioOff: "音效 關閉",
+                clearAll: "清空全部",
+                liveDispatch: "即時廣播",
+                occupantLabel: "城堡占領者:",
+                castleSwapBtn: "城堡切換",
+                notifyExpelBtn: "通知：撤離所有部隊",
+                callsignsLabel: "小隊代號與盟徽註記:",
+                editLabels: "編輯標籤",
+                lockLabels: "鎖定標籤",
+                resetBtn: "重置",
+                commandDeckTitle: "手動集結指揮台 (即時派發)",
+                unlockCommands: "解鎖指揮台",
+                lockDeck: "鎖定指揮台",
+                logRallyTitle: "紀錄獨立集結:",
+                logEnemyRally: "紀錄敵軍集結",
+                logCounterRally: (team) => `紀錄 ${team} 集結`,
+                callTeamNow: (team) => `呼叫 ${team} 發起集結`,
+                cancelTeam: (team) => `取消 ${team}`,
+                rallyLoggedToast: "集結已紀錄！",
+                undoBtn: "復原",
+                radarFeedTitle: "即時動態雷達與集結卡片",
+                activeRallies: (count) => `${count} 個進行中集結`,
+                noRalliesMsg: "尚無進攻或反擊集結紀錄",
+                noRalliesSub: "請點擊上方按鈕紀錄敵軍或我方集結。",
+                enemyRally: "敵軍集結",
+                counterRally: (team) => `${team} 反擊集結`,
+                prepWindow: "集結準備倒數",
+                marchWindow: "行軍時間倒數",
+                targetImpact: "預計抵達城堡時間:",
+                phaseBuilding: "階段: 集結等待中",
+                phaseComplete: "階段: 完成",
+                phaseMarching: "階段: 行軍進攻中",
+                phasePending: "階段: 等待出發",
+                phaseArrived: "階段: 已抵達",
+                landedPurging: (sec) => `⚔️ 撞擊完成 — ${sec}秒後自動清除`
+            },
+            zh: {
+                appTitle: "SvS 城堡战术雷达",
+                appSubtitle: "驻军实时数据镜像",
+                creditAce: "与 ACE 团队联合制作",
+                kofiBtn: "赞助 Ko-fi",
+                audioOn: "音效 开启",
+                audioOff: "音效 关闭",
+                clearAll: "清空全部",
+                liveDispatch: "实时广播",
+                occupantLabel: "城堡占领者:",
+                castleSwapBtn: "城堡切换",
+                notifyExpelBtn: "通知：撤离所有部队",
+                callsignsLabel: "小队代号与盟徽标记:",
+                editLabels: "编辑标签",
+                lockLabels: "锁定标签",
+                resetBtn: "重置",
+                commandDeckTitle: "手动集结指挥台 (实时派发)",
+                unlockCommands: "解锁指挥台",
+                lockDeck: "锁定指挥台",
+                logRallyTitle: "记录独立集结:",
+                logEnemyRally: "记录敌军集结",
+                logCounterRally: (team) => `记录 ${team} 集结`,
+                callTeamNow: (team) => `呼叫 ${team} 发起集结`,
+                cancelTeam: (team) => `取消 ${team}`,
+                rallyLoggedToast: "集结已记录！",
+                undoBtn: "撤销",
+                radarFeedTitle: "实时动态雷达与集结卡片",
+                activeRallies: (count) => `${count} 个进行中集结`,
+                noRalliesMsg: "暂无进攻或反击集结记录",
+                noRalliesSub: "请点击上方按钮记录敌军或我方集结。",
+                enemyRally: "敌军集结",
+                counterRally: (team) => `${team} 反攻集结`,
+                prepWindow: "集结准备倒计时",
+                marchWindow: "行军时间倒计时",
+                targetImpact: "预计抵达城堡时间:",
+                phaseBuilding: "阶段: 集结等待中",
+                phaseComplete: "阶段: 完成",
+                phaseMarching: "阶段: 行军进攻中",
+                phasePending: "阶段: 等待出发",
+                phaseArrived: "阶段: 已抵达",
+                landedPurging: (sec) => `⚔️ 撞击完成 — ${sec}秒后自动清除`
+            },
+            hr: {
+                appTitle: "SvS Radar Zamka",
+                appSubtitle: "Telemetrija Zamka U Stvarnom Vremenu",
+                creditAce: "Izrađeno u suradnji s ACE",
+                kofiBtn: "Podrži na Ko-fi",
+                audioOn: "Zvuk UKLJUČEN",
+                audioOff: "Zvuk ISKLJUČEN",
+                clearAll: "Očisti Sve",
+                liveDispatch: "UŽIVO",
+                occupantLabel: "Okupator Zamka:",
+                castleSwapBtn: "ZAMJENA ZAMKA",
+                notifyExpelBtn: "OBAVIJEST: EVAKUIRAJ SVE",
+                callsignsLabel: "Oznake Timova i Saveza:",
+                editLabels: "Uredi Oznake",
+                lockLabels: "Zaključaj Oznake",
+                resetBtn: "Poništi",
+                commandDeckTitle: "Naredbena Ploča (Izravno Slanje)",
+                unlockCommands: "OTKLJUČAJ NAREDBE",
+                lockDeck: "ZAKLJUČAJ PLOČU",
+                logRallyTitle: "Zabilježi Okupljanje:",
+                logEnemyRally: "NEPRIJATELJSKO OKUPLJANJE",
+                logCounterRally: (team) => `ZABILJEŽI ${team}`,
+                callTeamNow: (team) => `POZOVI ${team} ODMAH`,
+                cancelTeam: (team) => `OTKAŽI ${team}`,
+                rallyLoggedToast: "Okupljanje zabilježeno!",
+                undoBtn: "Vrati",
+                radarFeedTitle: "Aktivni Radar i Kartice Okupljanja",
+                activeRallies: (count) => `${count} Aktivna Okupljanja`,
+                noRalliesMsg: "Nema zabilježenih okupljanja",
+                noRalliesSub: "Upotrijebite tipke iznad za bilježenje neprijatelja ili saveznika.",
+                enemyRally: "NEPRIJATELJSKO OKUPLJANJE",
+                counterRally: (team) => `${team} PROTIV-OKUPLJANJE`,
+                prepWindow: "Priprema Okupljanja",
+                marchWindow: "Vrijeme Marša",
+                targetImpact: "Ciljani Dolazak u Zamak:",
+                phaseBuilding: "Faza: Priprema Okupljanja",
+                phaseComplete: "Faza: Završeno",
+                phaseMarching: "Faza: Marširanje",
+                phasePending: "Faza: Čekanje Lansiranja",
+                phaseArrived: "Faza: Stiglo",
+                landedPurging: (sec) => `⚔️ STIGLO — BRISANJE ZA ${sec}s`
+            },
+            es: {
+                appTitle: "SvS Radar de Telemetría del Castillo",
+                appSubtitle: "Espejo de Telemetría en Vivo",
+                creditAce: "Creado en colaboración con ACE",
+                kofiBtn: "Apoyar en Ko-fi",
+                audioOn: "Audio ACTIVADO",
+                audioOff: "Audio DESACTIVADO",
+                clearAll: "Borrar Todo",
+                liveDispatch: "DESPACHO EN VIVO",
+                occupantLabel: "Ocupante del Castillo:",
+                castleSwapBtn: "CAMBIO DE CASTILLO",
+                notifyExpelBtn: "NOTIFICAR: EVACUAR TODO",
+                callsignsLabel: "Señales de Equipo y Sufijos de Alianza:",
+                editLabels: "Editar Etiquetas",
+                lockLabels: "Bloquear Etiquetas",
+                resetBtn: "Restablecer",
+                commandDeckTitle: "Panel de Control Instantáneo (Manual)",
+                unlockCommands: "DESBLOQUEAR MANDOS",
+                lockDeck: "BLOQUEAR PANEL",
+                logRallyTitle: "Registrar Rally:",
+                logEnemyRally: "REGISTRAR RALLY ENEMIGO",
+                logCounterRally: (team) => `REGISTRAR RALLY ${team}`,
+                callTeamNow: (team) => `LLAMAR ${team} AHORA`,
+                cancelTeam: (team) => `CANCELAR ${team}`,
+                rallyLoggedToast: "¡Rally Registrado!",
+                undoBtn: "Deshacer",
+                radarFeedTitle: "Radar de Telemetría Activo",
+                activeRallies: (count) => `${count} Rallies Activos`,
+                noRalliesMsg: "No hay rallies enemigos ni aliados registrados",
+                noRalliesSub: "Use los botones superiores para registrar un rally.",
+                enemyRally: "RALLY ENEMIGO",
+                counterRally: (team) => `CONTRA-RALLY ${team}`,
+                prepWindow: "Ventana de Preparación",
+                marchWindow: "Tiempo de Marcha",
+                targetImpact: "Llegada Estimada al Castillo:",
+                phaseBuilding: "Fase: Preparando Rally",
+                phaseComplete: "Fase: Completado",
+                phaseMarching: "Fase: Marchando al Castillo",
+                phasePending: "Fase: Pendiente de Inicio",
+                phaseArrived: "Fase: Llegado",
+                landedPurging: (sec) => `⚔️ LLEGADO — ELIMINANDO EN ${sec}s`
+            },
+            ko: {
+                appTitle: "SvS 캐슬 실시간 레이더",
+                appSubtitle: "주둔군 실시간 텔레메트리 미러",
+                creditAce: "ACE 팀과의 협업으로 제작됨",
+                kofiBtn: "Ko-fi 후원",
+                audioOn: "오디오 켜짐",
+                audioOff: "오디오 꺼짐",
+                clearAll: "전체 삭제",
+                liveDispatch: "실시간 브로드캐스트",
+                occupantLabel: "캐슬 점령팀:",
+                castleSwapBtn: "캐슬 교체",
+                notifyExpelBtn: "알림: 전 부대 철수",
+                callsignsLabel: "팀 콜사인 및 연맹 태그:",
+                editLabels: "라벨 수정",
+                lockLabels: "라벨 잠금",
+                resetBtn: "초기화",
+                commandDeckTitle: "수동 집결 지휘대 (수동 즉시 발령)",
+                unlockCommands: "지휘대 잠금해제",
+                lockDeck: "지휘대 잠금",
+                logRallyTitle: "단독 집결 기록:",
+                logEnemyRally: "적군 집결 기록",
+                logCounterRally: (team) => `${team} 집결 기록`,
+                callTeamNow: (team) => `${team} 집결 발령`,
+                cancelTeam: (team) => `${team} 취소`,
+                rallyLoggedToast: "집결이 기록되었습니다!",
+                undoBtn: "실행 취소",
+                radarFeedTitle: "실시간 레이더 및 집결 카드리스트",
+                activeRallies: (count) => `${count}개 활성 집결`,
+                noRalliesMsg: "기록된 적군 또는 아군 집결이 없습니다",
+                noRalliesSub: "상단 버튼을 눌러 적군 또는 아군의 집결을 기록하세요.",
+                enemyRally: "적군 집결",
+                counterRally: (team) => `${team} 반격 집결`,
+                prepWindow: "집결 준비 시간",
+                marchWindow: "행군 이동 시간",
+                targetImpact: "캐슬 도착 예정 시간:",
+                phaseBuilding: "단계: 집결 대기 중",
+                phaseComplete: "단계: 완료",
+                phaseMarching: "단계: 캐슬 행군 중",
+                phasePending: "단계: 출발 대기 중",
+                phaseArrived: "단계: 도착 완료",
+                landedPurging: (sec) => `⚔️ 충돌 완료 — ${sec}초 후 자동 삭제`
+            }
+        };
+
+        let currentLang = 'auto';
+
+        function resolveSystemLanguage() {
+            const rawLang = (navigator.language || 'en-US').toLowerCase();
+            if (rawLang.startsWith('zh-tw') || rawLang.startsWith('zh-hk')) return 'zh-tw';
+            if (rawLang.startsWith('zh')) return 'zh';
+            if (rawLang.startsWith('hr')) return 'hr';
+            if (rawLang.startsWith('es')) return 'es';
+            if (rawLang.startsWith('ko')) return 'ko';
+            return 'en';
+        }
+
+        function getActiveTranslation() {
+            const langKey = currentLang === 'auto' ? resolveSystemLanguage() : currentLang;
+            return I18N_DICTIONARY[langKey] || I18N_DICTIONARY.en;
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('svs_preferred_lang', lang);
+            applyLanguageUI();
+        }
+
+        function applyLanguageUI() {
+            const t = getActiveTranslation();
+
+            const setTxt = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            setTxt('ui-app-title', t.appTitle);
+            setTxt('ui-app-subtitle', t.appSubtitle);
+            setTxt('ui-credit-ace', t.creditAce);
+            setTxt('ui-kofi-btn', t.kofiBtn);
+            setTxt('audio-status', audioEnabled ? t.audioOn : t.audioOff);
+            setTxt('ui-clear-all-btn', t.clearAll);
+            setTxt('ui-live-dispatch-tag', t.liveDispatch);
+            setTxt('ui-occupant-label', t.occupantLabel);
+            setTxt('ui-btn-castle-swap', t.castleSwapBtn);
+            setTxt('ui-btn-notify-expel', t.notifyExpelBtn);
+            setTxt('ui-callsigns-label', t.callsignsLabel);
+            setTxt('ui-reset-btn', t.resetBtn);
+            setTxt('ui-command-deck-title', t.commandDeckTitle);
+            setTxt('ui-log-standalone-title', t.logRallyTitle);
+            setTxt('ui-rally-logged-toast', t.rallyLoggedToast);
+            setTxt('ui-undo-btn', t.undoBtn);
+            setTxt('ui-radar-feed-title', t.radarFeedTitle);
+            setTxt('ui-no-rallies-msg', t.noRalliesMsg);
+            setTxt('ui-no-rallies-sub', t.noRalliesSub);
+
+            renderTagInputs();
+            renderActionCluster();
+            renderCommandDeckLockState();
+            updateDashboard();
+        }
+
+        // Initialize preferred language from local storage
+        const savedLangPref = localStorage.getItem('svs_preferred_lang');
+        if (savedLangPref) {
+            currentLang = savedLangPref;
+            const langSel = document.getElementById('lang-selector');
+            if (langSel) langSel.value = savedLangPref;
+        }
 
         // Data Models & Neutral Defaults
         const STORAGE_KEY = 'svs_castle_teams_neutral_v1';
@@ -331,16 +665,17 @@
             const icon = document.getElementById('audio-icon');
             const status = document.getElementById('audio-status');
             const btn = document.getElementById('audio-btn');
+            const t = getActiveTranslation();
             
             if (icon && status) {
                 if (audioEnabled) {
                     icon.className = 'fa-solid fa-volume-high text-emerald-400';
-                    status.innerText = 'Audio ON';
+                    status.innerText = t.audioOn;
                     btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2';
                     playBeep(880, 0.1);
                 } else {
                     icon.className = 'fa-solid fa-volume-xmark text-red-400';
-                    status.innerText = 'Audio OFF';
+                    status.innerText = t.audioOff;
                     btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/30 hover:bg-red-900/40 text-red-300 border border-red-800/40 transition flex items-center gap-2';
                 }
             }
@@ -381,7 +716,7 @@
             if (threats.length > 0 && !masterInterval) {
                 masterInterval = setInterval(tick, 1000);
             }
-            updateDashboard();
+            applyLanguageUI();
         }
 
         function subscribeToLiveSession() {
@@ -545,14 +880,12 @@
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-amber-950/95 border-2 border-amber-500 text-amber-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-triangle-exclamation text-base text-amber-400 animate-pulse";
             } else if (action === 'CANCEL') {
-                const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
-                const label = getTeamLabel(`team${teamNum}`).toUpperCase();
+                const label = getTeamLabel(teamKey).toUpperCase();
                 textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-red-950/95 border-2 border-red-500 text-red-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-ban text-base text-red-400 animate-pulse";
             } else {
-                const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
-                const label = getTeamLabel(`team${teamNum}`).toUpperCase();
+                const label = getTeamLabel(teamKey).toUpperCase();
                 textEl.innerText = `⚡ DISPATCH: ${label} - OPEN RALLY NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-emerald-950/95 border-2 border-emerald-400 text-emerald-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
@@ -593,6 +926,7 @@
         }
 
         function toggleCommandDeckLock() {
+            const t = getActiveTranslation();
             if (isCommandDeckUnlocked) {
                 // Lock immediately
                 isCommandDeckUnlocked = false;
@@ -628,6 +962,7 @@
             const icon = document.getElementById('deck-lock-icon');
             const label = document.getElementById('deck-lock-label');
             const btn = document.getElementById('deck-lock-btn');
+            const t = getActiveTranslation();
 
             if (!drawer || !icon || !label || !btn) return;
 
@@ -638,7 +973,7 @@
                     drawer.classList.add('max-h-96', 'opacity-100');
                 }, 10);
                 icon.className = 'fa-solid fa-lock-open text-xs text-emerald-400';
-                label.innerText = 'LOCK DECK';
+                label.innerText = t.lockDeck;
                 btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1.5';
             } else {
                 drawer.classList.remove('max-h-96', 'opacity-100');
@@ -647,7 +982,7 @@
                     drawer.classList.add('hidden');
                 }, 300);
                 icon.className = 'fa-solid fa-lock text-xs text-amber-400';
-                label.innerText = 'UNLOCK COMMANDS';
+                label.innerText = t.unlockCommands;
                 btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5';
             }
         }
@@ -714,12 +1049,13 @@
         function renderActionCluster() {
             const clusterContainer = document.getElementById('action-cluster-bar');
             if (!clusterContainer) return;
+            const t = getActiveTranslation();
 
             let html = `
                 <!-- ALWAYS RENDER ENEMY RALLY -->
                 <button onclick="window.spawnSingleRally('ENEMY')" class="py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-display font-extrabold text-xs uppercase tracking-wider border border-red-400 shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-skull text-base"></i>
-                    <span>LOG ENEMY RALLY</span>
+                    <span>${t.logEnemyRally}</span>
                 </button>
             `;
 
@@ -732,7 +1068,7 @@
                     html += `
                         <button onclick="window.spawnSingleRally('${teamKey.toUpperCase()}')" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-emerald-300 shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-shield text-base"></i>
-                            <span>LOG ${label.toUpperCase()} RALLY</span>
+                            <span>${t.logCounterRally(label.toUpperCase())}</span>
                         </button>
                     `;
                 }
@@ -782,7 +1118,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const msg = new SpeechSynthesisUtterance("Attention! Castle Swap!");
-                msg.lang = 'en-US';
+                msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang;
                 msg.rate = 1.25;
                 window.speechSynthesis.speak(msg);
             }
@@ -797,7 +1133,7 @@
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                     const msg = new SpeechSynthesisUtterance("Expel all troops from Castle now!");
-                    msg.lang = 'en-US';
+                    msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang;
                     msg.rate = 1.25;
                     window.speechSynthesis.speak(msg);
                 }
@@ -827,7 +1163,7 @@
             }
 
             const msg = new SpeechSynthesisUtterance(phrase);
-            msg.lang = navigator.language || 'en-US'; // Dynamic system locale fallback
+            msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang; // Dynamic locale
             msg.rate = 1.25; // Accelerated tactical cadence
             msg.pitch = 1.0;
             
@@ -966,13 +1302,14 @@
         function renderTagInputs() {
             const lockIcon = document.getElementById('lock-icon');
             const lockLabel = document.getElementById('lock-label');
+            const t = getActiveTranslation();
             
             if (isLocked) {
                 lockIcon.className = 'fa-solid fa-lock text-xs text-amber-400';
-                lockLabel.innerText = 'Edit Labels';
+                lockLabel.innerText = t.editLabels;
             } else {
                 lockIcon.className = 'fa-solid fa-lock-open text-xs text-emerald-400';
-                lockLabel.innerText = 'Lock Labels';
+                lockLabel.innerText = t.lockLabels;
             }
 
             [1, 2, 3].forEach(num => {
@@ -997,17 +1334,14 @@
                 const instantBtnLabel = document.getElementById(`instant-label-${num}`);
                 const cancelBtnLabel = document.getElementById(`cancel-label-${num}`);
                 const codeName = teamConfig[teamKey]?.codeName || `Team ${num}`;
+                const teamDisplayName = tag ? `${codeName.toUpperCase()} (${tag})` : codeName.toUpperCase();
 
                 if (instantBtnLabel) {
-                    instantBtnLabel.innerText = tag 
-                        ? `CALL ${codeName.toUpperCase()} (${tag})` 
-                        : `CALL ${codeName.toUpperCase()}`;
+                    instantBtnLabel.innerText = t.callTeamNow(teamDisplayName);
                 }
 
                 if (cancelBtnLabel) {
-                    cancelBtnLabel.innerText = tag 
-                        ? `CANCEL ${codeName.toUpperCase()} (${tag})` 
-                        : `CANCEL ${codeName.toUpperCase()}`;
+                    cancelBtnLabel.innerText = t.cancelTeam(teamDisplayName);
                 }
             });
         }
@@ -1167,9 +1501,10 @@
             const feed = document.getElementById('threat-feed');
             const emptyMsg = document.getElementById('empty-msg');
             const countBadge = document.getElementById('threat-count-badge');
+            const tI18n = getActiveTranslation();
 
             if (!feed) return;
-            countBadge.innerText = `${threats.length} Active Rallies`;
+            countBadge.innerText = tI18n.activeRallies(threats.length);
 
             if (threats.length === 0) {
                 feed.innerHTML = '';
@@ -1209,7 +1544,7 @@
                     ? Math.max(0, Math.floor((travelTarget - now) / 1000))
                     : remainingTravelSec;
 
-                const titleLabel = isEnemy ? "ENEMY RALLY" : `${getTeamLabel(t.rallyType).toUpperCase()} COUNTER RALLY`;
+                const titleLabel = isEnemy ? tI18n.enemyRally : tI18n.counterRally(getTeamLabel(t.rallyType).toUpperCase());
 
                 const themeBorder = isEnemy ? "border-red-500/40 bg-red-950/20" : "border-emerald-500/40 bg-emerald-950/20";
                 const themeTitle = isEnemy ? "text-red-400" : "text-emerald-400";
@@ -1226,7 +1561,7 @@
                             <span class="text-xs font-bold ${themeTitle} uppercase flex items-center gap-1.5">
                                 <i class="fa-solid ${themeIcon} text-xs"></i> ${titleLabel}
                             </span>
-                            ${t.status === "IMPACT_COMPLETE" ? `<span class="text-[11px] font-bold text-amber-400 animate-pulse bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40">⚔️ LANDED — PURGING IN ${t.autoPurgeSec}s</span>` : ''}
+                            ${t.status === "IMPACT_COMPLETE" ? `<span class="text-[11px] font-bold text-amber-400 animate-pulse bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40">${tI18n.landedPurging(t.autoPurgeSec)}</span>` : ''}
                         </div>
                         <button onclick="window.removeThreat('${t.threatId}')" class="text-slate-500 hover:text-red-400 text-xs">
                             <i class="fa-solid fa-trash-can"></i>
@@ -1239,9 +1574,9 @@
                         <!-- Rally Prep Window -->
                         <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
                             <div>
-                                <div class="text-[10px] text-slate-400 font-bold uppercase">Rally Prep Window</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase">${tI18n.prepWindow}</div>
                                 <div class="font-display text-2xl font-extrabold ${themeTitle} font-mono">${formatTime(remainingPrepSec)}</div>
-                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${isPrepPhase ? "Phase: Rally Building" : "Phase: Complete"}</div>
+                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${isPrepPhase ? tI18n.phaseBuilding : tI18n.phaseComplete}</div>
                             </div>
                             <div class="flex items-center gap-1">
                                 <button onclick="window.nudgePrepTime('${t.threatId}', -5)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[10px] font-bold rounded">-5s</button>
@@ -1254,9 +1589,9 @@
                         <!-- March Travel Window -->
                         <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
                             <div>
-                                <div class="text-[10px] text-slate-400 font-bold uppercase">March Travel Window</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase">${tI18n.marchWindow}</div>
                                 <div class="font-mono text-2xl font-extrabold text-slate-200">${displayTravelSec}s</div>
-                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${!isPrepPhase && remainingTravelSec > 0 ? "Phase: Marching to Castle" : isPrepPhase ? "Phase: Pending Launch" : "Phase: Arrived"}</div>
+                                <div class="text-[9px] text-slate-500 uppercase font-semibold">${!isPrepPhase && remainingTravelSec > 0 ? tI18n.phaseMarching : isPrepPhase ? tI18n.phasePending : tI18n.phaseArrived}</div>
                             </div>
                             <div class="flex items-center gap-1">
                                 <button onclick="window.nudgeTravelTime('${t.threatId}', -5)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[10px] font-bold rounded">-5s</button>
@@ -1271,7 +1606,7 @@
                     <!-- FOOTER: TOTAL ARRIVAL STATUS -->
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between gap-2 text-[11px] font-bold">
                         <span class="text-slate-400 uppercase flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-dot text-amber-400 text-[8px] animate-ping"></i> Target Castle Arrival:
+                            <i class="fa-solid fa-circle-dot text-amber-400 text-[8px] animate-ping"></i> ${tI18n.targetImpact}
                         </span>
                         <span class="font-display text-base font-extrabold text-amber-400 font-mono">${formatTime(totalRemainingSec)}</span>
                     </div>
@@ -1282,6 +1617,7 @@
         }
 
         // Attach global window bindings for inline HTML onclick attributes
+        window.setLanguage = setLanguage;
         window.toggleAudio = toggleAudio;
         window.clearAllThreats = clearAllThreats;
         window.setCastleOccupant = setCastleOccupant;
@@ -1298,6 +1634,9 @@
         window.removeThreat = removeThreat;
         window.nudgePrepTime = nudgePrepTime;
         window.nudgeTravelTime = nudgeTravelTime;
+
+        // Apply dynamic language UI on initial script execution
+        applyLanguageUI();
 
         // Background Sleep / Tab Visibility Resume Listener
         document.addEventListener('visibilitychange', () => {
