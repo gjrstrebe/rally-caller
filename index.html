@@ -66,18 +66,6 @@
 </head>
 <body class="h-full flex flex-col p-3 sm:p-5 max-w-7xl mx-auto relative">
 
-    <!-- EXPEL ALL TROOPS FULL-SCREEN HAZARD OVERLAY -->
-    <div id="expel-hazard-screen" class="fixed inset-0 z-50 expel-overlay hidden flex flex-col items-center justify-center p-6 text-center shadow-2xl">
-        <div class="bg-slate-950/90 p-8 rounded-3xl border-4 border-amber-400 max-w-xl flex flex-col items-center gap-4 animate-bounce">
-            <i class="fa-solid fa-triangle-exclamation text-6xl text-amber-400"></i>
-            <h2 class="font-display text-3xl font-extrabold text-amber-400 tracking-wider uppercase">EVACUATE CASTLE NOW!</h2>
-            <p class="text-white font-bold text-lg uppercase">Whale Expel Alert: Evacuate All Friendly Garrison Troops Immediately!</p>
-            <button onclick="dismissExpelAlert()" class="mt-4 px-8 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-display font-extrabold text-base rounded-2xl border-2 border-white shadow-xl transition">
-                DISMISS ALERT
-            </button>
-        </div>
-    </div>
-
     <!-- HEADER -->
     <header id="radar-header-alert" class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-3 transition-all duration-300">
         <div class="flex items-center gap-3">
@@ -136,10 +124,19 @@
             </div>
         </div>
 
-        <button onclick="triggerExpelAllAlert()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-amber-300 shadow-lg animate-pulse flex items-center gap-2">
-            <i class="fa-solid fa-triangle-exclamation text-base"></i>
-            <span>NOTIFY: EXPEL ALL TROOPS</span>
-        </button>
+        <div class="flex items-center gap-2">
+            <!-- CASTLE SWAP BROADCAST BUTTON -->
+            <button onclick="window.triggerCastleSwapAlert()" class="px-3.5 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-yellow-300 shadow-md active:scale-95 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate text-sm"></i>
+                <span>CASTLE SWAP</span>
+            </button>
+
+            <!-- REFACTORED EXPEL BUTTON (NO FULL SCREEN OVERLAY) -->
+            <button onclick="window.triggerExpelAllAlert()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-amber-300 shadow-md active:scale-95 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                <span>NOTIFY: EXPEL ALL</span>
+            </button>
+        </div>
     </div>
 
     <!-- DYNAMIC ALLIANCE TAG CONFIGURATION BAR WITH PASSCODE LOCK -->
@@ -325,6 +322,8 @@
         let lastPlayedCalloutTimestamp = 0;
         let lastHandledExpelTime = 0;
         let lastPlayedExpelTimestamp = 0;
+        let lastHandledSwapTime = 0;
+        let lastPlayedSwapTimestamp = 0;
         let isCommandDeckUnlocked = localStorage.getItem('commandDeckUnlocked') === 'true';
 
         function toggleAudio() {
@@ -449,9 +448,25 @@
                         const isNewEvent = (eventTime > lastHandledExpelTime);
                         const isFresh = (Date.now() - eventTime < 10000);
 
-                        if (isNewEvent && !isSelfTrigger && data.expelAlert.active && isFresh) {
+                        if (isNewEvent && isFresh) {
                             lastHandledExpelTime = eventTime;
                             renderExpelOverlay(true);
+                        }
+                    }
+
+                    // Evaluate Castle Swap Alert Event
+                    if (data.swapAlert && data.swapAlert.timestamp) {
+                        const eventTime = data.swapAlert.timestamp;
+                        const isSelfTrigger = (eventTime === lastPlayedSwapTimestamp);
+                        const isNewEvent = (eventTime > lastHandledSwapTime);
+                        const isFresh = (Date.now() - eventTime < 10000);
+
+                        if (isNewEvent && isFresh) {
+                            lastHandledSwapTime = eventTime;
+                            triggerGlobalTickerAlert(null, 'SWAP');
+                            if (!isSelfTrigger) {
+                                playSwapAudioProfile();
+                            }
                         }
                     }
 
@@ -517,18 +532,27 @@
             const iconEl = document.getElementById('ticker-icon');
             if (!ticker || !textEl || !iconEl) return;
 
-            const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
-            const label = getTeamLabel(`team${teamNum}`).toUpperCase();
-
             // Hard reset CSS animation class
             ticker.classList.remove('hidden', 'flash-trigger');
             void ticker.offsetWidth; // Force instant browser reflow
 
-            if (action === 'CANCEL') {
+            if (action === 'SWAP') {
+                textEl.innerText = `🔄 BROADCAST: CASTLE SWAP IN PROGRESS!`;
+                ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-yellow-950/95 border-2 border-yellow-400 text-yellow-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
+                iconEl.className = "fa-solid fa-rotate text-base text-yellow-400 animate-spin";
+            } else if (action === 'EXPEL') {
+                textEl.innerText = `⚠️ EMERGENCY: EXPEL ALL TROOPS FROM CASTLE NOW!`;
+                ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-amber-950/95 border-2 border-amber-500 text-amber-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
+                iconEl.className = "fa-solid fa-triangle-exclamation text-base text-amber-400 animate-pulse";
+            } else if (action === 'CANCEL') {
+                const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+                const label = getTeamLabel(`team${teamNum}`).toUpperCase();
                 textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-red-950/95 border-2 border-red-500 text-red-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-ban text-base text-red-400 animate-pulse";
             } else {
+                const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
+                const label = getTeamLabel(`team${teamNum}`).toUpperCase();
                 textEl.innerText = `⚡ DISPATCH: ${label} - OPEN RALLY NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-emerald-950/95 border-2 border-emerald-400 text-emerald-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
@@ -732,33 +756,51 @@
             syncChannel.postMessage({ type: 'EXPEL_ALERT', timestamp: alertTime });
         }
 
-        function dismissExpelAlert() {
-            renderExpelOverlay(false);
+        async function triggerCastleSwapAlert() {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                try { await audioCtx.resume(); } catch (e) {}
+            }
+
+            const alertTime = Date.now();
+            lastPlayedSwapTimestamp = alertTime;
+            lastHandledSwapTime = alertTime;
+
+            triggerGlobalTickerAlert(null, 'SWAP');
+            playSwapAudioProfile();
+
             if (currentUser) {
-                updateDoc(sessionDocRef, { expelAlert: { active: false, timestamp: Date.now() } }).catch(() => {});
+                updateDoc(sessionDocRef, {
+                    swapAlert: { active: true, timestamp: alertTime }
+                }).catch(() => {});
+            }
+            syncChannel.postMessage({ type: 'SWAP_ALERT', timestamp: alertTime });
+        }
+
+        function playSwapAudioProfile() {
+            if (!audioEnabled) return;
+            playBeep(750, 0.2);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance("Attention! Castle Swap!");
+                msg.lang = 'en-US';
+                msg.rate = 1.25;
+                window.speechSynthesis.speak(msg);
             }
         }
 
         function renderExpelOverlay(active) {
-            const el = document.getElementById('expel-hazard-screen');
-            if (!el) return;
-            if (active) {
-                el.classList.remove('hidden');
-                if (audioEnabled) {
-                    playBeep(1200, 0.4);
-                    if ('speechSynthesis' in window) {
-                        window.speechSynthesis.cancel(); // Flush queue
+            if (!active) return;
+            triggerGlobalTickerAlert(null, 'EXPEL');
 
-                        const msg = new SpeechSynthesisUtterance("Expel all troops from Castle now!");
-                        msg.lang = 'en-US';
-                        msg.rate = 1.25; // Accelerated speed
-                        msg.pitch = 1.0;
-
-                        window.speechSynthesis.speak(msg);
-                    }
+            if (audioEnabled) {
+                playBeep(1200, 0.3);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const msg = new SpeechSynthesisUtterance("Expel all troops from Castle now!");
+                    msg.lang = 'en-US';
+                    msg.rate = 1.25;
+                    window.speechSynthesis.speak(msg);
                 }
-            } else {
-                el.classList.add('hidden');
             }
         }
 
@@ -1232,7 +1274,7 @@
         window.renderInstantCommandDeck = renderInstantCommandDeck;
         window.toggleCommandDeckLock = toggleCommandDeckLock;
         window.triggerExpelAllAlert = triggerExpelAllAlert;
-        window.dismissExpelAlert = dismissExpelAlert;
+        window.triggerCastleSwapAlert = triggerCastleSwapAlert;
         window.toggleLock = toggleLock;
         window.resetDefaultTags = resetDefaultTags;
         window.handleTagInput = handleTagInput;
