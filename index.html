@@ -724,17 +724,48 @@
 
         // Request Browser System Notification Permission
         function requestNotificationPermission() {
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    const notifyBtn = document.getElementById('notify-btn');
-                    if (permission === 'granted') {
-                        if (notifyBtn) {
-                            notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
-                            notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span>Alerts Active</span>';
-                        }
-                    }
-                });
+            if (!('Notification' in window)) {
+                alert("This browser does not support desktop/mobile system notifications.");
+                return;
             }
+
+            const notifyBtn = document.getElementById('notify-btn');
+
+            if (Notification.permission === 'granted') {
+                sendSystemNotification("System Alerts Active", "You will receive live tactical dispatch alerts!");
+                if (notifyBtn) {
+                    notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                    notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
+                }
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                alert("Notification permissions are currently BLOCKED in your browser site settings. Please tap the lock/tune icon in your browser URL bar and allow Notifications for this site.");
+                if (notifyBtn) {
+                    notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5';
+                    notifyBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-xs"></i><span id="ui-notify-status">Alerts Blocked</span>';
+                }
+                return;
+            }
+
+            // Prompt permission
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    if (notifyBtn) {
+                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                        notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
+                    }
+                    sendSystemNotification("System Alerts Enabled", "Live dispatch notifications are now active!");
+                } else if (permission === 'denied') {
+                    if (notifyBtn) {
+                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5';
+                        notifyBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-xs"></i><span id="ui-notify-status">Alerts Blocked</span>';
+                    }
+                }
+            }).catch(err => {
+                console.error("Notification permission error:", err);
+            });
         }
 
         // Send System Banner Notification
@@ -1709,6 +1740,15 @@
 
         // Apply dynamic language UI on initial script execution
         applyLanguageUI();
+
+        // Check initial notification status on page load
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const notifyBtn = document.getElementById('notify-btn');
+            if (notifyBtn) {
+                notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
+            }
+        }
 
         // Background Sleep / Tab Visibility Resume Listener
         document.addEventListener('visibilitychange', () => {
