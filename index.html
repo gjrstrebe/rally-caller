@@ -79,7 +79,7 @@
     </div>
 
     <!-- HEADER -->
-    <header class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-3">
+    <header id="radar-header-alert" class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-3 transition-all duration-300">
         <div class="flex items-center gap-3">
             <div class="p-2 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-400">
                 <i class="fa-solid fa-chess-castle text-xl"></i>
@@ -178,44 +178,49 @@
             <span class="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-2">
                 <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> Instant Command Deck (Direct Manual Dispatch)
             </span>
-            <span class="text-[10px] text-slate-400 italic">Bypasses queue timers — triggers immediate audio/visual alert</span>
+            <button id="deck-lock-btn" onclick="window.toggleCommandDeckLock()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5">
+                <i id="deck-lock-icon" class="fa-solid fa-lock text-xs"></i>
+                <span id="deck-lock-label">UNLOCK COMMANDS</span>
+            </button>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <!-- Team 1 Controls -->
-            <div id="command-group-1" class="flex flex-col gap-1.5">
-                <button id="instant-btn-1" onclick="window.handleInstantCallout('team1', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-sm"></i>
-                    <span id="instant-label-1">CALL TEAM 1 NOW</span>
-                </button>
-                <button id="cancel-btn-1" onclick="window.handleInstantCallout('team1', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-ban text-xs"></i>
-                    <span id="cancel-label-1">CANCEL TEAM 1</span>
-                </button>
-            </div>
+        <div id="command-deck-drawer" class="transition-all duration-300 overflow-hidden max-h-0 opacity-0 hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <!-- Team 1 Controls -->
+                <div id="command-group-1" class="flex flex-col gap-1.5">
+                    <button id="instant-btn-1" onclick="window.handleInstantCallout('team1', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-sm"></i>
+                        <span id="instant-label-1">CALL TEAM 1 NOW</span>
+                    </button>
+                    <button id="cancel-btn-1" onclick="window.handleInstantCallout('team1', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-ban text-xs"></i>
+                        <span id="cancel-label-1">CANCEL TEAM 1</span>
+                    </button>
+                </div>
 
-            <!-- Team 2 Controls -->
-            <div id="command-group-2" class="flex flex-col gap-1.5">
-                <button id="instant-btn-2" onclick="window.handleInstantCallout('team2', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-sm"></i>
-                    <span id="instant-label-2">CALL TEAM 2 NOW</span>
-                </button>
-                <button id="cancel-btn-2" onclick="window.handleInstantCallout('team2', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-ban text-xs"></i>
-                    <span id="cancel-label-2">CANCEL TEAM 2</span>
-                </button>
-            </div>
+                <!-- Team 2 Controls -->
+                <div id="command-group-2" class="flex flex-col gap-1.5">
+                    <button id="instant-btn-2" onclick="window.handleInstantCallout('team2', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-sm"></i>
+                        <span id="instant-label-2">CALL TEAM 2 NOW</span>
+                    </button>
+                    <button id="cancel-btn-2" onclick="window.handleInstantCallout('team2', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-ban text-xs"></i>
+                        <span id="cancel-label-2">CANCEL TEAM 2</span>
+                    </button>
+                </div>
 
-            <!-- Team 3 Controls -->
-            <div id="command-group-3" class="flex flex-col gap-1.5">
-                <button id="instant-btn-3" onclick="window.handleInstantCallout('team3', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-sm"></i>
-                    <span id="instant-label-3">CALL TEAM 3 NOW</span>
-                </button>
-                <button id="cancel-btn-3" onclick="window.handleInstantCallout('team3', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-ban text-xs"></i>
-                    <span id="cancel-label-3">CANCEL TEAM 3</span>
-                </button>
+                <!-- Team 3 Controls -->
+                <div id="command-group-3" class="flex flex-col gap-1.5">
+                    <button id="instant-btn-3" onclick="window.handleInstantCallout('team3', 'CALL')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-display font-bold text-xs uppercase border border-emerald-400 shadow transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-sm"></i>
+                        <span id="instant-label-3">CALL TEAM 3 NOW</span>
+                    </button>
+                    <button id="cancel-btn-3" onclick="window.handleInstantCallout('team3', 'CANCEL')" class="py-1.5 px-3 rounded-lg bg-red-950/80 hover:bg-red-900/90 text-red-300 font-display font-bold text-[11px] uppercase border border-red-700/50 transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-ban text-xs"></i>
+                        <span id="cancel-label-3">CANCEL TEAM 3</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -289,6 +294,7 @@
         // Data Models & Neutral Defaults
         const STORAGE_KEY = 'svs_castle_teams_neutral_v1';
         const DEFAULT_PASSCODE = 'WOS4336';
+        const COMMAND_DECK_PASSCODE = 'SVS4336';
 
         const DEFAULT_CONFIG = {
             team1: { codeName: "Team 1", allianceTag: "" },
@@ -310,6 +316,7 @@
         let lastPlayedCalloutTimestamp = 0;
         let lastHandledExpelTime = 0;
         let lastPlayedExpelTimestamp = 0;
+        let isCommandDeckUnlocked = localStorage.getItem('commandDeckUnlocked') === 'true';
 
         function toggleAudio() {
             audioEnabled = !audioEnabled;
@@ -413,7 +420,7 @@
 
                         if (isNewEvent && !isSelfTrigger && isFresh) {
                             lastHandledInstantTime = eventTime;
-                            triggerVisualFlashOverlay(data.instantCallout.teamKey, data.instantCallout.action || "CALL");
+                            triggerHeaderAlertPulse();
                             playTeamAudioProfile(data.instantCallout.teamKey, data.instantCallout.action || "CALL");
                         }
                     }
@@ -476,6 +483,7 @@
             lastHandledInstantTime = calloutTime;
 
             triggerVisualFlashOverlay(teamKey, action);
+            triggerHeaderAlertPulse();
             playTeamAudioProfile(teamKey, action);
 
             if (currentUser) {
@@ -493,6 +501,76 @@
             if (btn) {
                 btn.classList.add('flash-trigger');
                 setTimeout(() => btn.classList.remove('flash-trigger'), 600);
+            }
+        }
+
+        function triggerHeaderAlertPulse() {
+            const header = document.getElementById('radar-header-alert');
+            if (header) {
+                header.classList.add('border-amber-400', 'bg-amber-500/10');
+                setTimeout(() => {
+                    header.classList.remove('border-amber-400', 'bg-amber-500/10');
+                }, 1000);
+            }
+        }
+
+        function toggleCommandDeckLock() {
+            if (isCommandDeckUnlocked) {
+                // Lock immediately
+                isCommandDeckUnlocked = false;
+                localStorage.setItem('commandDeckUnlocked', 'false');
+            } else {
+                // Prompt for SVS4336
+                const rawInput = prompt("Enter Passcode to Unlock Instant Command Deck:");
+                const sanitizedInput = (rawInput || "").trim().toUpperCase();
+
+                if (sanitizedInput === COMMAND_DECK_PASSCODE) {
+                    isCommandDeckUnlocked = true;
+                    localStorage.setItem('commandDeckUnlocked', 'true');
+                    
+                    // Hardware Audio Warm-Up
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        audioCtx.resume().catch(() => {});
+                    }
+                    if ('speechSynthesis' in window) {
+                        const silentPing = new SpeechSynthesisUtterance('');
+                        silentPing.volume = 0;
+                        window.speechSynthesis.speak(silentPing);
+                    }
+                } else if (rawInput !== null) {
+                    alert("Incorrect Command Deck Passcode!");
+                    return;
+                }
+            }
+            renderCommandDeckLockState();
+        }
+
+        function renderCommandDeckLockState() {
+            const drawer = document.getElementById('command-deck-drawer');
+            const icon = document.getElementById('deck-lock-icon');
+            const label = document.getElementById('deck-lock-label');
+            const btn = document.getElementById('deck-lock-btn');
+
+            if (!drawer || !icon || !label || !btn) return;
+
+            if (isCommandDeckUnlocked) {
+                drawer.classList.remove('hidden');
+                setTimeout(() => {
+                    drawer.classList.remove('max-h-0', 'opacity-0');
+                    drawer.classList.add('max-h-96', 'opacity-100');
+                }, 10);
+                icon.className = 'fa-solid fa-lock-open text-xs text-emerald-400';
+                label.innerText = 'LOCK DECK';
+                btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1.5';
+            } else {
+                drawer.classList.remove('max-h-96', 'opacity-100');
+                drawer.classList.add('max-h-0', 'opacity-0');
+                setTimeout(() => {
+                    drawer.classList.add('hidden');
+                }, 300);
+                icon.className = 'fa-solid fa-lock text-xs text-amber-400';
+                label.innerText = 'UNLOCK COMMANDS';
+                btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5';
             }
         }
 
@@ -974,6 +1052,7 @@
         function updateDashboard() {
             renderOccupantButtons();
             renderInstantCommandDeck();
+            renderCommandDeckLockState();
 
             const feed = document.getElementById('threat-feed');
             const emptyMsg = document.getElementById('empty-msg');
@@ -1097,6 +1176,7 @@
         window.clearAllThreats = clearAllThreats;
         window.setCastleOccupant = setCastleOccupant;
         window.renderInstantCommandDeck = renderInstantCommandDeck;
+        window.toggleCommandDeckLock = toggleCommandDeckLock;
         window.triggerExpelAllAlert = triggerExpelAllAlert;
         window.dismissExpelAlert = dismissExpelAlert;
         window.toggleLock = toggleLock;
@@ -1108,6 +1188,20 @@
         window.removeThreat = removeThreat;
         window.nudgePrepTime = nudgePrepTime;
         window.nudgeTravelTime = nudgeTravelTime;
+
+        // Background Sleep / Tab Visibility Resume Listener
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(() => {});
+                }
+                if ('speechSynthesis' in window && window.speechSynthesis.speaking === false) {
+                    const silentPing = new SpeechSynthesisUtterance('');
+                    silentPing.volume = 0;
+                    window.speechSynthesis.speak(silentPing);
+                }
+            }
+        });
     </script>
 </body>
 </html>
