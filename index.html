@@ -800,6 +800,20 @@
             }
         }
 
+        // --- ASYNC SYSTEM VOICE PRE-WARMING & CACHE ---
+        let cachedSystemVoices = [];
+
+        function populateVoiceCache() {
+            if ('speechSynthesis' in window) {
+                cachedSystemVoices = window.speechSynthesis.getVoices();
+            }
+        }
+
+        populateVoiceCache();
+        if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = populateVoiceCache;
+        }
+
         const AUDIO_PHRASES = {
             en: {
                 call: (team) => `${team}, Open Rally Now!`,
@@ -814,7 +828,7 @@
                 expel: "立即撤离城堡所有部队！"
             },
             'zh-tw': {
-                call: (team) => `${team}，立即開啟集結！`,
+                call: (team) => `${team}，開啟集結！`,
                 cancel: (team) => `取消 ${team}！`,
                 swap: "注意！城堡切換！",
                 expel: "立即撤離城堡所有部隊！"
@@ -843,7 +857,7 @@
             const rawLang = (navigator.language || 'en-US').toLowerCase();
             const primaryLang = rawLang.split('-')[0];
 
-            // Specific match check (e.g. 'zh-tw') before falling back to primary language ('zh', 'hr', etc.)
+            // 1. Resolve micro-dictionary matching
             const dict = AUDIO_PHRASES[rawLang] || AUDIO_PHRASES[primaryLang] || AUDIO_PHRASES.en;
 
             let phrase = "";
@@ -857,10 +871,13 @@
             msg.rate = 1.2;
             msg.pitch = 1.0;
 
-            // Auto-select best matching system voice for native accent
-            if ('speechSynthesis' in window) {
-                const voices = window.speechSynthesis.getVoices();
-                const matchingVoice = voices.find(v => 
+            // 2. Select system voice from pre-warmed cache
+            if (cachedSystemVoices.length === 0 && 'speechSynthesis' in window) {
+                cachedSystemVoices = window.speechSynthesis.getVoices();
+            }
+
+            if (cachedSystemVoices.length > 0) {
+                const matchingVoice = cachedSystemVoices.find(v => 
                     v.lang.toLowerCase() === rawLang || 
                     v.lang.toLowerCase().startsWith(primaryLang)
                 );
@@ -879,7 +896,7 @@
             window.speechSynthesis.cancel();
 
             const teamKey = `team${teamNum}`;
-            const label = getTeamLabel(teamKey);
+            const label = getTeamLabelClean(teamKey);
 
             const type = action === "CANCEL" ? 'cancel' : 'call';
             const msg = createLocalizedUtterance(type, label);
@@ -1074,19 +1091,12 @@
                 : `Team ${config.codeName}`;
         }
 
-        function playBeep(freq = 880, duration = 0.15) {
-            if (!audioEnabled) return;
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
+        function getTeamLabelClean(teamKey) {
+            const keyLower = (teamKey || '').toLowerCase();
+            const config = teamConfig[keyLower];
+            const codeName = config?.codeName || (keyLower === 'team1' ? 'Team 1' : keyLower === 'team2' ? 'Team 2' : 'Team 3');
+            const tag = config?.allianceTag;
+            return tag ? `${codeName} (${tag})` : codeName;
         }
 
         // Single-Rally Timer Nudge Functions (Epoch Timestamp Shift)
