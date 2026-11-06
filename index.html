@@ -1013,12 +1013,26 @@
         }
 
         function getTeamLabel(teamKey) {
-            const keyLower = teamKey.toLowerCase();
-            const config = teamConfig[keyLower];
-            if (!config) return teamKey.toUpperCase();
-            return config.allianceTag 
-                ? `Team ${config.codeName} (${config.allianceTag})` 
-                : `Team ${config.codeName}`;
+            if (!teamKey) return "";
+            
+            // Normalize key to 'team1', 'team2', 'team3' regardless of format ('TEAM_1', 'Team 1', 'team1')
+            const cleanKey = teamKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const config = teamConfig[cleanKey];
+            
+            if (!config) {
+                const numMatch = cleanKey.match(/\d+/);
+                return numMatch ? `Team ${numMatch[0]}` : teamKey.toUpperCase();
+            }
+
+            let codeName = config.codeName || `Team ${cleanKey.replace('team', '')}`;
+            
+            // Deduplicate leading "Team " prefix to prevent "Team Team X"
+            if (/^team\s+/i.test(codeName)) {
+                codeName = codeName.replace(/^team\s+/i, 'Team ');
+            }
+            
+            const tag = (config.allianceTag || "").trim();
+            return tag ? `${codeName} (${tag})` : codeName;
         }
 
         function playBeep(freq = 880, duration = 0.15) {
