@@ -827,7 +827,7 @@
             }
 
             const msg = new SpeechSynthesisUtterance(phrase);
-            msg.lang = 'en-US';
+            msg.lang = navigator.language || 'en-US'; // Dynamic system locale fallback
             msg.rate = 1.25; // Accelerated tactical cadence
             msg.pitch = 1.0;
             
