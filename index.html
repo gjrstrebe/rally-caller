@@ -108,6 +108,10 @@
                 <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
                 <span id="audio-status">Audio ON</span>
             </button>
+            <button id="notify-btn" onclick="requestNotificationPermission()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-bell text-xs"></i>
+                <span id="ui-notify-status">Allow Alerts</span>
+            </button>
             <button onclick="clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition">
                 <i class="fa-solid fa-trash-can mr-1"></i> <span id="ui-clear-all-btn">Clear All</span>
             </button>
@@ -694,6 +698,59 @@
         // Web Audio Context Singleton
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+        // --- BACKGROUND KEEP-ALIVE AUDIO ENGINE (Prevents Mobile Tab Sleep) ---
+        let silentAudioLoopNode = null;
+
+        function startBackgroundAudioKeeper() {
+            if (!audioCtx || silentAudioLoopNode) return;
+            try {
+                // Create an infinite low-frequency silent buffer to maintain OS audio priority
+                const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.loop = true;
+                
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0.001; // Virtually silent, enough to keep thread active
+                
+                source.connect(gain);
+                gain.connect(audioCtx.destination);
+                source.start(0);
+                silentAudioLoopNode = source;
+            } catch (e) {
+                console.warn("Background audio keeper failed to initialize:", e);
+            }
+        }
+
+        // Request Browser System Notification Permission
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    const notifyBtn = document.getElementById('notify-btn');
+                    if (permission === 'granted') {
+                        if (notifyBtn) {
+                            notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                            notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span>Alerts Active</span>';
+                        }
+                    }
+                });
+            }
+        }
+
+        // Send System Banner Notification
+        function sendSystemNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
+                try {
+                    new Notification(title, {
+                        body: body,
+                        icon: 'https://www.asktechdad.com/favicon.ico',
+                        tag: 'svs-dispatch-alert',
+                        renotify: true
+                    });
+                } catch (e) {}
+            }
+        }
+
         // BroadcastChannel Fallback for Local Multi-Tab Sync
         const syncChannel = new BroadcastChannel('svs_rally_sync');
 
@@ -871,25 +928,39 @@
             ticker.classList.remove('hidden', 'flash-trigger');
             void ticker.offsetWidth; // Force instant browser reflow
 
+            let notifyTitle = "SvS Telemetry Dispatch";
+            let notifyBody = "";
+
             if (action === 'SWAP') {
                 textEl.innerText = `🔄 BROADCAST: CASTLE SWAP IN PROGRESS!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-yellow-950/95 border-2 border-yellow-400 text-yellow-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-rotate text-base text-yellow-400 animate-spin";
+                notifyTitle = "🔄 CASTLE SWAP";
+                notifyBody = "Castle Swap In Progress!";
             } else if (action === 'EXPEL') {
                 textEl.innerText = `⚠️ EMERGENCY: EXPEL ALL TROOPS FROM CASTLE NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-amber-950/95 border-2 border-amber-500 text-amber-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-triangle-exclamation text-base text-amber-400 animate-pulse";
+                notifyTitle = "⚠️ EXPEL ALL TROOPS";
+                notifyBody = "Evacuate all troops from Castle immediately!";
             } else if (action === 'CANCEL') {
                 const label = getTeamLabel(teamKey).toUpperCase();
                 textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-red-950/95 border-2 border-red-500 text-red-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-ban text-base text-red-400 animate-pulse";
+                notifyTitle = `🚫 CANCEL ${label}`;
+                notifyBody = `Abort rally march immediately!`;
             } else {
                 const label = getTeamLabel(teamKey).toUpperCase();
                 textEl.innerText = `⚡ DISPATCH: ${label} - OPEN RALLY NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-emerald-950/95 border-2 border-emerald-400 text-emerald-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
+                notifyTitle = `⚡ OPEN RALLY: ${label}`;
+                notifyBody = `${label}, Open Rally Now!`;
             }
+
+            // Trigger System Overlay Banner when app is in background behind Whiteout Survival
+            sendSystemNotification(notifyTitle, notifyBody);
 
             if (window.tickerTimeout) clearTimeout(window.tickerTimeout);
             window.tickerTimeout = setTimeout(() => {
@@ -1619,6 +1690,7 @@
         // Attach global window bindings for inline HTML onclick attributes
         window.setLanguage = setLanguage;
         window.toggleAudio = toggleAudio;
+        window.requestNotificationPermission = requestNotificationPermission;
         window.clearAllThreats = clearAllThreats;
         window.setCastleOccupant = setCastleOccupant;
         window.renderInstantCommandDeck = renderInstantCommandDeck;
@@ -1649,6 +1721,9 @@
                     silentPing.volume = 0;
                     window.speechSynthesis.speak(silentPing);
                 }
+            } else {
+                // Tab pushed to background: Engage silent audio keeper to retain socket connection & priority
+                startBackgroundAudioKeeper();
             }
         });
     </script>
