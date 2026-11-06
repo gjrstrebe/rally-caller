@@ -781,9 +781,7 @@
             playBeep(750, 0.2);
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const msg = new SpeechSynthesisUtterance("Attention! Castle Swap!");
-                msg.lang = 'en-US';
-                msg.rate = 1.25;
+                const msg = createLocalizedUtterance('swap');
                 window.speechSynthesis.speak(msg);
             }
         }
@@ -796,12 +794,82 @@
                 playBeep(1200, 0.3);
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
-                    const msg = new SpeechSynthesisUtterance("Expel all troops from Castle now!");
-                    msg.lang = 'en-US';
-                    msg.rate = 1.25;
+                    const msg = createLocalizedUtterance('expel');
                     window.speechSynthesis.speak(msg);
                 }
             }
+        }
+
+        const AUDIO_PHRASES = {
+            en: {
+                call: (team) => `${team}, Open Rally Now!`,
+                cancel: (team) => `Cancel ${team}!`,
+                swap: "Attention! Castle Swap!",
+                expel: "Expel all troops from Castle now!"
+            },
+            zh: {
+                call: (team) => `${team}，立即开启集结！`,
+                cancel: (team) => `取消 ${team}！`,
+                swap: "注意！城堡切换！",
+                expel: "立即撤离城堡所有部队！"
+            },
+            'zh-tw': {
+                call: (team) => `${team}，立即開啟集結！`,
+                cancel: (team) => `取消 ${team}！`,
+                swap: "注意！城堡切換！",
+                expel: "立即撤離城堡所有部隊！"
+            },
+            hr: {
+                call: (team) => `${team}, otvori okupljanje odmah!`,
+                cancel: (team) => `Otkaži ${team}!`,
+                swap: "Pažnja! Zamjena za zamak!",
+                expel: "Evakuirajte sve trupe iz zamka odmah!"
+            },
+            es: {
+                call: (team) => `¡${team}, abran rally ahora!`,
+                cancel: (team) => `¡Cancelar ${team}!`,
+                swap: "¡Atención! ¡Cambio de Castillo!",
+                expel: "¡Evacuen todas las tropas del Castillo ahora!"
+            },
+            ko: {
+                call: (team) => `${team}, 지금 집결을 열어주세요!`,
+                cancel: (team) => `${team} 취소!`,
+                swap: "주의! 캐슬 교체!",
+                expel: "지금 성에서 모든 부대를 철수하세요!"
+            }
+        };
+
+        function createLocalizedUtterance(type, teamName = "") {
+            const rawLang = (navigator.language || 'en-US').toLowerCase();
+            const primaryLang = rawLang.split('-')[0];
+
+            // Specific match check (e.g. 'zh-tw') before falling back to primary language ('zh', 'hr', etc.)
+            const dict = AUDIO_PHRASES[rawLang] || AUDIO_PHRASES[primaryLang] || AUDIO_PHRASES.en;
+
+            let phrase = "";
+            if (type === 'call') phrase = dict.call(teamName);
+            else if (type === 'cancel') phrase = dict.cancel(teamName);
+            else if (type === 'swap') phrase = dict.swap;
+            else if (type === 'expel') phrase = dict.expel;
+
+            const msg = new SpeechSynthesisUtterance(phrase);
+            msg.lang = navigator.language || 'en-US';
+            msg.rate = 1.2;
+            msg.pitch = 1.0;
+
+            // Auto-select best matching system voice for native accent
+            if ('speechSynthesis' in window) {
+                const voices = window.speechSynthesis.getVoices();
+                const matchingVoice = voices.find(v => 
+                    v.lang.toLowerCase() === rawLang || 
+                    v.lang.toLowerCase().startsWith(primaryLang)
+                );
+                if (matchingVoice) {
+                    msg.voice = matchingVoice;
+                }
+            }
+
+            return msg;
         }
 
         function speakCallout(teamNum, action = "CALL") {
@@ -811,25 +879,10 @@
             window.speechSynthesis.cancel();
 
             const teamKey = `team${teamNum}`;
-            const config = teamConfig[teamKey];
-            const codeName = config?.codeName || `Team ${teamNum}`;
-            const tag = config?.allianceTag;
+            const label = getTeamLabel(teamKey);
 
-            let phrase = "";
-            if (action === "CANCEL") {
-                phrase = tag 
-                    ? `Cancel ${codeName} ${tag}!`
-                    : `Cancel ${codeName}!`;
-            } else {
-                phrase = tag 
-                    ? `${codeName} ${tag}, Open Rally Now!`
-                    : `${codeName}, Open Rally Now!`;
-            }
-
-            const msg = new SpeechSynthesisUtterance(phrase);
-            msg.lang = 'en-US';
-            msg.rate = 1.25; // Accelerated tactical cadence
-            msg.pitch = 1.0;
+            const type = action === "CANCEL" ? 'cancel' : 'call';
+            const msg = createLocalizedUtterance(type, label);
             
             window.speechSynthesis.speak(msg);
         }
