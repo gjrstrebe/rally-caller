@@ -64,7 +64,7 @@
         }
     </style>
 </head>
-<body class="h-full flex flex-col p-3 sm:p-5 max-w-7xl mx-auto relative">
+<body class="h-full flex flex-col p-3 sm:p-5 max-w-7xl mx-auto relative overflow-x-hidden">
 
     <!-- HEADER -->
     <header id="radar-header-alert" class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-3 transition-all duration-300">
@@ -86,7 +86,7 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <!-- DYNAMIC LANGUAGE SELECTOR DROPDOWN -->
             <div class="relative">
                 <select id="lang-selector" onchange="window.setLanguage(this.value)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 focus:outline-none focus:border-amber-400 transition cursor-pointer">
@@ -100,19 +100,23 @@
                 </select>
             </div>
 
-            <a href="https://ko-fi.com/asktechdad" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow transition flex items-center gap-1.5">
+            <a href="https://ko-fi.com/asktechdad" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow transition flex items-center gap-1.5 whitespace-nowrap">
                 <i class="fa-solid fa-mug-hot text-xs"></i>
                 <span id="ui-kofi-btn">Support on Ko-fi</span>
             </a>
-            <button id="audio-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
+            <button id="audio-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 whitespace-nowrap">
                 <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
                 <span id="audio-status">Audio ON</span>
             </button>
-            <button id="notify-btn" onclick="requestNotificationPermission()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5">
+            <button id="pip-btn" onclick="window.togglePiPHUD()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/40 transition flex items-center gap-1.5 whitespace-nowrap" title="Float Live Banner & Audio Over Game">
+                <i class="fa-solid fa-up-right-from-square text-xs"></i>
+                <span id="ui-pip-status">PiP HUD</span>
+            </button>
+            <button id="notify-btn" onclick="requestNotificationPermission()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5 whitespace-nowrap">
                 <i class="fa-solid fa-bell text-xs"></i>
                 <span id="ui-notify-status">Allow Alerts</span>
             </button>
-            <button onclick="clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition">
+            <button onclick="clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition whitespace-nowrap">
                 <i class="fa-solid fa-trash-can mr-1"></i> <span id="ui-clear-all-btn">Clear All</span>
             </button>
         </div>
@@ -287,6 +291,10 @@
             </div>
         </div>
     </main>
+
+    <!-- HIDDEN PIP CANVAS & VIDEO STREAM ELEMENTS -->
+    <canvas id="pip-canvas" width="640" height="240" class="hidden"></canvas>
+    <video id="pip-video" class="hidden" playsinline muted autoplay></video>
 
     <!-- LOGIC SCRIPT (FIREBASE ESM MODULE) -->
     <script type="module">
@@ -664,6 +672,18 @@
         let lastPlayedSwapTimestamp = 0;
         let isCommandDeckUnlocked = localStorage.getItem('commandDeckUnlocked') === 'true';
 
+        // PiP HUD Live State
+        let pipRenderInterval = null;
+        let activePipAlert = {
+            active: false,
+            action: '',
+            text: '',
+            subtext: '',
+            bgColor: '#0f172a',
+            borderColor: '#f59e0b',
+            textColor: '#fcd34d'
+        };
+
         function toggleAudio() {
             audioEnabled = !audioEnabled;
             const icon = document.getElementById('audio-icon');
@@ -675,12 +695,12 @@
                 if (audioEnabled) {
                     icon.className = 'fa-solid fa-volume-high text-emerald-400';
                     status.innerText = t.audioOn;
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2';
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 whitespace-nowrap';
                     playBeep(880, 0.1);
                 } else {
                     icon.className = 'fa-solid fa-volume-xmark text-red-400';
                     status.innerText = t.audioOff;
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/30 hover:bg-red-900/40 text-red-300 border border-red-800/40 transition flex items-center gap-2';
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/30 hover:bg-red-900/40 text-red-300 border border-red-800/40 transition flex items-center gap-2 whitespace-nowrap';
                 }
             }
         }
@@ -734,7 +754,7 @@
             if (Notification.permission === 'granted') {
                 sendSystemNotification("System Alerts Active", "You will receive live tactical dispatch alerts!");
                 if (notifyBtn) {
-                    notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                    notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                     notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
                 }
                 return;
@@ -743,7 +763,7 @@
             if (Notification.permission === 'denied') {
                 alert("Notification permissions are currently BLOCKED in your browser site settings. Please tap the lock/tune icon in your browser URL bar and allow Notifications for this site.");
                 if (notifyBtn) {
-                    notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5';
+                    notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                     notifyBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-xs"></i><span id="ui-notify-status">Alerts Blocked</span>';
                 }
                 return;
@@ -753,13 +773,13 @@
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
                     if (notifyBtn) {
-                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                         notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
                     }
                     sendSystemNotification("System Alerts Enabled", "Live dispatch notifications are now active!");
                 } else if (permission === 'denied') {
                     if (notifyBtn) {
-                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5';
+                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                         notifyBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-xs"></i><span id="ui-notify-status">Alerts Blocked</span>';
                     }
                 }
@@ -968,12 +988,30 @@
                 iconEl.className = "fa-solid fa-rotate text-base text-yellow-400 animate-spin";
                 notifyTitle = "🔄 CASTLE SWAP";
                 notifyBody = "Castle Swap In Progress!";
+                activePipAlert = {
+                    active: true,
+                    action: 'SWAP',
+                    text: 'CASTLE SWAP IN PROGRESS!',
+                    subtext: 'ROTATE GARRISON IMMEDIATELY',
+                    bgColor: '#422006',
+                    borderColor: '#facc15',
+                    textColor: '#fef08a'
+                };
             } else if (action === 'EXPEL') {
                 textEl.innerText = `⚠️ EMERGENCY: EXPEL ALL TROOPS FROM CASTLE NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-amber-950/95 border-2 border-amber-500 text-amber-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-triangle-exclamation text-base text-amber-400 animate-pulse";
                 notifyTitle = "⚠️ EXPEL ALL TROOPS";
                 notifyBody = "Evacuate all troops from Castle immediately!";
+                activePipAlert = {
+                    active: true,
+                    action: 'EXPEL',
+                    text: 'EXPEL ALL TROOPS NOW!',
+                    subtext: 'EVACUATE CASTLE IMMEDIATELY',
+                    bgColor: '#451a03',
+                    borderColor: '#f59e0b',
+                    textColor: '#fde68a'
+                };
             } else if (action === 'CANCEL') {
                 const label = getTeamLabel(teamKey).toUpperCase();
                 textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
@@ -981,6 +1019,15 @@
                 iconEl.className = "fa-solid fa-ban text-base text-red-400 animate-pulse";
                 notifyTitle = `🚫 CANCEL ${label}`;
                 notifyBody = `Abort rally march immediately!`;
+                activePipAlert = {
+                    active: true,
+                    action: 'CANCEL',
+                    text: `CANCEL: ${label}!`,
+                    subtext: 'ABORT RALLY MARCH NOW',
+                    bgColor: '#450a0a',
+                    borderColor: '#ef4444',
+                    textColor: '#fecaca'
+                };
             } else {
                 const label = getTeamLabel(teamKey).toUpperCase();
                 textEl.innerText = `⚡ DISPATCH: ${label} - OPEN RALLY NOW!`;
@@ -988,7 +1035,18 @@
                 iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
                 notifyTitle = `⚡ OPEN RALLY: ${label}`;
                 notifyBody = `${label}, Open Rally Now!`;
+                activePipAlert = {
+                    active: true,
+                    action: 'CALL',
+                    text: `${label} - OPEN RALLY!`,
+                    subtext: 'LAUNCH COUNTER RALLY NOW',
+                    bgColor: '#022c22',
+                    borderColor: '#34d399',
+                    textColor: '#a7f3d0'
+                };
             }
+
+            renderPiPCanvas();
 
             // Trigger System Overlay Banner when app is in background behind Whiteout Survival
             sendSystemNotification(notifyTitle, notifyBody);
@@ -996,6 +1054,8 @@
             if (window.tickerTimeout) clearTimeout(window.tickerTimeout);
             window.tickerTimeout = setTimeout(() => {
                 ticker.classList.add('hidden');
+                activePipAlert.active = false;
+                renderPiPCanvas();
             }, 4500);
         }
 
@@ -1014,6 +1074,162 @@
                 void btn.offsetWidth; // Reflow reset
                 btn.classList.add('flash-trigger');
                 setTimeout(() => btn.classList.remove('flash-trigger'), 600);
+            }
+        }
+
+        // --- FLOATING PICTURE-IN-PICTURE (PiP) TACTICAL HUD ENGINE ---
+        function renderPiPCanvas() {
+            const canvas = document.getElementById('pip-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 1. Base Background
+            ctx.fillStyle = activePipAlert.active ? activePipAlert.bgColor : '#090d16';
+            ctx.fillRect(0, 0, w, h);
+
+            // 2. Outer Tactical Border (Flashes when dispatch alert is active)
+            const pulseOn = Math.floor(Date.now() / 250) % 2 === 0;
+            ctx.lineWidth = activePipAlert.active ? (pulseOn ? 10 : 5) : 4;
+            ctx.strokeStyle = activePipAlert.active ? activePipAlert.borderColor : '#1e293b';
+            ctx.strokeRect(4, 4, w - 8, h - 8);
+
+            // 3. Top Header Strip (Title + Castle Occupant Pill)
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(10, 10, w - 20, 44);
+
+            ctx.font = '800 18px "Chakra Petch", sans-serif';
+            ctx.fillStyle = '#fbbf24';
+            ctx.textAlign = 'left';
+            ctx.fillText('SVS CASTLE TELEMETRY HUD', 24, 39);
+
+            // Occupant Pill
+            const occLabel = castleOccupant === 'ENEMY' ? 'OCCUPANT: ENEMY' : `OCCUPANT: ${getTeamLabel(castleOccupant).toUpperCase()}`;
+            ctx.font = '700 15px "Inter", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillStyle = castleOccupant === 'ENEMY' ? '#f87171' : '#34d399';
+            ctx.fillText(occLabel, w - 24, 38);
+
+            // 4. Main Content Area: Active Alert Banner OR Live Rally Timers
+            if (activePipAlert.active) {
+                // High-contrast Live Dispatch Banner inside PiP
+                ctx.textAlign = 'center';
+                ctx.font = '800 34px "Chakra Petch", sans-serif';
+                ctx.fillStyle = activePipAlert.textColor;
+                ctx.fillText(activePipAlert.text, w / 2, 132);
+
+                ctx.font = '700 18px "Inter", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(activePipAlert.subtext, w / 2, 178);
+            } else if (threats.length > 0) {
+                // Display top 2 active rally timers
+                const now = Date.now();
+                const visibleThreats = threats.slice(0, 2);
+                visibleThreats.forEach((t, idx) => {
+                    const yPos = 98 + (idx * 64);
+                    const isEnemy = t.rallyType === 'ENEMY';
+                    const prepTarget = t.timer.prepTargetTime || now;
+                    const travelTarget = t.timer.travelTargetTime || prepTarget;
+                    const totalSec = Math.max(0, Math.floor((travelTarget - now) / 1000));
+                    const prepSec = Math.max(0, Math.floor((prepTarget - now) / 1000));
+
+                    const label = isEnemy ? 'ENEMY RALLY' : `${getTeamLabel(t.rallyType).toUpperCase()}`;
+                    const phaseTag = prepSec > 0 ? `PREP ${formatTime(prepSec)}` : 'MARCHING';
+
+                    ctx.textAlign = 'left';
+                    ctx.font = '800 22px "Chakra Petch", sans-serif';
+                    ctx.fillStyle = isEnemy ? '#f87171' : '#34d399';
+                    ctx.fillText(`#${idx + 1} ${label}`, 24, yPos);
+
+                    ctx.font = '600 14px "Inter", sans-serif';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(phaseTag, 24, yPos + 22);
+
+                    ctx.textAlign = 'right';
+                    ctx.font = '800 30px monospace';
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fillText(formatTime(totalSec), w - 24, yPos + 8);
+                });
+            } else {
+                // Standby Mode
+                ctx.textAlign = 'center';
+                ctx.font = '700 22px "Chakra Petch", sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('LIVE AUDIO & DISPATCH MONITOR ACTIVE', w / 2, 128);
+
+                ctx.font = '500 15px "Inter", sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('Keep this floating window open over Whiteout Survival', w / 2, 162);
+            }
+        }
+
+        async function togglePiPHUD() {
+            const video = document.getElementById('pip-video');
+            const canvas = document.getElementById('pip-canvas');
+            const pipBtn = document.getElementById('pip-btn');
+            const pipStatus = document.getElementById('ui-pip-status');
+
+            if (!video || !canvas) return;
+
+            // Warm up audio & speech threads on user tap so background voice callouts stay unlocked
+            if (audioCtx && audioCtx.state === 'suspended') {
+                try { await audioCtx.resume(); } catch (e) {}
+            }
+            startBackgroundAudioKeeper();
+            if ('speechSynthesis' in window) {
+                const silentPing = new SpeechSynthesisUtterance('');
+                silentPing.volume = 0;
+                window.speechSynthesis.speak(silentPing);
+            }
+
+            try {
+                // Exit PiP if already active
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                    return;
+                }
+
+                renderPiPCanvas();
+                if (!video.srcObject) {
+                    const stream = canvas.captureStream(15);
+                    video.srcObject = stream;
+                }
+
+                await video.play();
+
+                if (video.requestPictureInPicture) {
+                    await video.requestPictureInPicture();
+                } else if (video.webkitSetPresentationMode) {
+                    video.webkitSetPresentationMode('picture-in-picture');
+                } else {
+                    alert("Picture-in-Picture is not supported on this browser.");
+                    return;
+                }
+
+                // Start smooth HUD refresh loop
+                if (pipRenderInterval) clearInterval(pipRenderInterval);
+                pipRenderInterval = setInterval(renderPiPCanvas, 250);
+
+                if (pipBtn && pipStatus) {
+                    pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-950/60 text-sky-300 border border-sky-400 transition flex items-center gap-1.5 whitespace-nowrap';
+                    pipStatus.innerText = 'PiP Active';
+                }
+
+                video.addEventListener('leavepictureinpicture', () => {
+                    if (pipRenderInterval) {
+                        clearInterval(pipRenderInterval);
+                        pipRenderInterval = null;
+                    }
+                    if (pipBtn && pipStatus) {
+                        pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
+                        pipStatus.innerText = 'PiP HUD';
+                    }
+                }, { once: true });
+
+            } catch (err) {
+                console.warn("PiP launch error:", err);
+                alert("Unable to open Picture-in-Picture window. Ensure you tapped the button directly and your browser permits PiP.");
             }
         }
 
@@ -1721,6 +1937,7 @@
         // Attach global window bindings for inline HTML onclick attributes
         window.setLanguage = setLanguage;
         window.toggleAudio = toggleAudio;
+        window.togglePiPHUD = togglePiPHUD;
         window.requestNotificationPermission = requestNotificationPermission;
         window.clearAllThreats = clearAllThreats;
         window.setCastleOccupant = setCastleOccupant;
@@ -1745,7 +1962,7 @@
         if ('Notification' in window && Notification.permission === 'granted') {
             const notifyBtn = document.getElementById('notify-btn');
             if (notifyBtn) {
-                notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5';
+                notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                 notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
             }
         }
