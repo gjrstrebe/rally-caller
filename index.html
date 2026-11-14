@@ -292,9 +292,9 @@
         </div>
     </main>
 
-    <!-- HIDDEN PIP CANVAS & VIDEO STREAM ELEMENTS -->
+    <!-- OFFSCREEN PIP CANVAS & VIDEO STREAM ELEMENTS (Playback triggered ONLY by PiP HUD button) -->
     <canvas id="pip-canvas" width="640" height="240" class="hidden"></canvas>
-    <video id="pip-video" class="hidden" playsinline muted autoplay></video>
+    <video id="pip-video" width="640" height="240" class="fixed -left-[9999px] top-0 w-1 h-1 opacity-0 pointer-events-none" playsinline webkit-playsinline muted></video>
 
     <!-- LOGIC SCRIPT (FIREBASE ESM MODULE) -->
     <script type="module">
@@ -724,14 +724,13 @@
         function startBackgroundAudioKeeper() {
             if (!audioCtx || silentAudioLoopNode) return;
             try {
-                // Create an infinite low-frequency silent buffer to maintain OS audio priority
                 const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
                 const source = audioCtx.createBufferSource();
                 source.buffer = buffer;
                 source.loop = true;
                 
                 const gain = audioCtx.createGain();
-                gain.gain.value = 0.001; // Virtually silent, enough to keep thread active
+                gain.gain.value = 0.001;
                 
                 source.connect(gain);
                 gain.connect(audioCtx.destination);
@@ -769,7 +768,6 @@
                 return;
             }
 
-            // Prompt permission
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
                     if (notifyBtn) {
@@ -862,7 +860,7 @@
                         renderTagInputs();
                     }
 
-                    // Evaluate Instant Callout Event (Ignore events older than 10s on load)
+                    // Evaluate Instant Callout Event
                     if (data.instantCallout && data.instantCallout.timestamp) {
                         const eventTime = data.instantCallout.timestamp;
                         const isSelfTrigger = (eventTime === lastPlayedCalloutTimestamp);
@@ -874,10 +872,8 @@
                             const teamKey = data.instantCallout.teamKey;
                             const action = data.instantCallout.action || "CALL";
 
-                            // 1. ALWAYS trigger visual feedback (banner + button flash if visible)
                             triggerVisualFlashOverlay(teamKey, action);
 
-                            // 2. Trigger audio callout ONLY if not self-initiated (prevents local echo)
                             if (!isSelfTrigger) {
                                 playTeamAudioProfile(teamKey, action);
                             }
@@ -887,7 +883,6 @@
                     // Evaluate Expel Alert Event
                     if (data.expelAlert && data.expelAlert.timestamp) {
                         const eventTime = data.expelAlert.timestamp;
-                        const isSelfTrigger = (eventTime === lastPlayedExpelTimestamp);
                         const isNewEvent = (eventTime > lastHandledExpelTime);
                         const isFresh = (Date.now() - eventTime < 10000);
 
@@ -926,7 +921,6 @@
                         liveThreats.push(docSnap.data());
                     });
 
-                    // Sort threats chronologically by creation timestamp
                     liveThreats.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                     threats = liveThreats;
 
@@ -975,9 +969,8 @@
             const iconEl = document.getElementById('ticker-icon');
             if (!ticker || !textEl || !iconEl) return;
 
-            // Hard reset CSS animation class
             ticker.classList.remove('hidden', 'flash-trigger');
-            void ticker.offsetWidth; // Force instant browser reflow
+            void ticker.offsetWidth;
 
             let notifyTitle = "SvS Telemetry Dispatch";
             let notifyBody = "";
@@ -1047,8 +1040,6 @@
             }
 
             renderPiPCanvas();
-
-            // Trigger System Overlay Banner when app is in background behind Whiteout Survival
             sendSystemNotification(notifyTitle, notifyBody);
 
             if (window.tickerTimeout) clearTimeout(window.tickerTimeout);
@@ -1060,18 +1051,15 @@
         }
 
         function triggerVisualFlashOverlay(teamKey, action = "CALL") {
-            // 1. ALWAYS fire universal banner HUD on ALL connected devices
             triggerGlobalTickerAlert(teamKey, action);
 
-            // 2. Target physical button for visual flash
             const teamNum = teamKey === 'team1' ? 1 : teamKey === 'team2' ? 2 : 3;
             const btnId = action === "CANCEL" ? `cancel-btn-${teamNum}` : `instant-btn-${teamNum}`;
             const btn = document.getElementById(btnId);
 
-            // If button exists and its parent container is NOT hidden, trigger flash animation
             if (btn && btn.offsetParent !== null) {
                 btn.classList.remove('flash-trigger');
-                void btn.offsetWidth; // Reflow reset
+                void btn.offsetWidth;
                 btn.classList.add('flash-trigger');
                 setTimeout(() => btn.classList.remove('flash-trigger'), 600);
             }
@@ -1085,17 +1073,14 @@
             const w = canvas.width;
             const h = canvas.height;
 
-            // 1. Base Background
             ctx.fillStyle = activePipAlert.active ? activePipAlert.bgColor : '#090d16';
             ctx.fillRect(0, 0, w, h);
 
-            // 2. Outer Tactical Border (Flashes when dispatch alert is active)
             const pulseOn = Math.floor(Date.now() / 250) % 2 === 0;
             ctx.lineWidth = activePipAlert.active ? (pulseOn ? 10 : 5) : 4;
             ctx.strokeStyle = activePipAlert.active ? activePipAlert.borderColor : '#1e293b';
             ctx.strokeRect(4, 4, w - 8, h - 8);
 
-            // 3. Top Header Strip (Title + Castle Occupant Pill)
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.fillRect(10, 10, w - 20, 44);
 
@@ -1104,16 +1089,13 @@
             ctx.textAlign = 'left';
             ctx.fillText('SVS CASTLE TELEMETRY HUD', 24, 39);
 
-            // Occupant Pill
             const occLabel = castleOccupant === 'ENEMY' ? 'OCCUPANT: ENEMY' : `OCCUPANT: ${getTeamLabel(castleOccupant).toUpperCase()}`;
             ctx.font = '700 15px "Inter", sans-serif';
             ctx.textAlign = 'right';
             ctx.fillStyle = castleOccupant === 'ENEMY' ? '#f87171' : '#34d399';
             ctx.fillText(occLabel, w - 24, 38);
 
-            // 4. Main Content Area: Active Alert Banner OR Live Rally Timers
             if (activePipAlert.active) {
-                // High-contrast Live Dispatch Banner inside PiP
                 ctx.textAlign = 'center';
                 ctx.font = '800 34px "Chakra Petch", sans-serif';
                 ctx.fillStyle = activePipAlert.textColor;
@@ -1123,7 +1105,6 @@
                 ctx.fillStyle = '#ffffff';
                 ctx.fillText(activePipAlert.subtext, w / 2, 178);
             } else if (threats.length > 0) {
-                // Display top 2 active rally timers
                 const now = Date.now();
                 const visibleThreats = threats.slice(0, 2);
                 visibleThreats.forEach((t, idx) => {
@@ -1152,7 +1133,6 @@
                     ctx.fillText(formatTime(totalSec), w - 24, yPos + 8);
                 });
             } else {
-                // Standby Mode
                 ctx.textAlign = 'center';
                 ctx.font = '700 22px "Chakra Petch", sans-serif';
                 ctx.fillStyle = '#94a3b8';
@@ -1164,17 +1144,74 @@
             }
         }
 
-        async function togglePiPHUD() {
+        // Attach Canvas Stream without invoking video.play() on global touches
+        function initPiPCanvasStream() {
             const video = document.getElementById('pip-video');
             const canvas = document.getElementById('pip-canvas');
-            const pipBtn = document.getElementById('pip-btn');
-            const pipStatus = document.getElementById('ui-pip-status');
-
             if (!video || !canvas) return;
 
-            // Warm up audio & speech threads on user tap so background voice callouts stay unlocked
+            renderPiPCanvas();
+            if (!video.srcObject && typeof canvas.captureStream === 'function') {
+                video.srcObject = canvas.captureStream(15);
+            }
+            if (!pipRenderInterval) {
+                pipRenderInterval = setInterval(renderPiPCanvas, 500);
+            }
+        }
+
+        initPiPCanvasStream();
+
+        function setPiPButtonState(active) {
+            const pipBtn = document.getElementById('pip-btn');
+            const pipStatus = document.getElementById('ui-pip-status');
+            if (!pipBtn || !pipStatus) return;
+
+            if (active) {
+                if (pipRenderInterval) clearInterval(pipRenderInterval);
+                pipRenderInterval = setInterval(renderPiPCanvas, 250);
+                pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-950/60 text-sky-300 border border-sky-400 transition flex items-center gap-1.5 whitespace-nowrap';
+                pipStatus.innerText = 'PiP Active';
+            } else {
+                pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
+                pipStatus.innerText = 'PiP HUD';
+            }
+        }
+
+        function enterPiPMode(video) {
+            const supportsWebKitPiP = typeof video.webkitSupportsPresentationMode === 'function' &&
+                                      video.webkitSupportsPresentationMode('picture-in-picture');
+
+            if (supportsWebKitPiP) {
+                try {
+                    video.webkitSetPresentationMode('picture-in-picture');
+                    setPiPButtonState(true);
+                } catch (err) {
+                    console.warn("WebKit PiP error:", err);
+                    alert("Unable to launch Picture-in-Picture here. If you are viewing inside an embedded preview frame, open the live GitHub Pages URL directly in Safari/Chrome.");
+                }
+            } else if (typeof video.requestPictureInPicture === 'function') {
+                video.requestPictureInPicture()
+                    .then(() => setPiPButtonState(true))
+                    .catch((err) => {
+                        console.warn("Standard PiP error:", err);
+                        alert("Unable to launch Picture-in-Picture here. If you are viewing inside an embedded preview frame, open the live GitHub Pages URL directly in Safari/Chrome.");
+                    });
+            } else {
+                alert("Picture-in-Picture is not supported in this browser environment.");
+            }
+        }
+
+        function togglePiPHUD() {
+            const video = document.getElementById('pip-video');
+            const canvas = document.getElementById('pip-canvas');
+            if (!video || !canvas) return;
+
+            initPiPCanvasStream();
+            renderPiPCanvas();
+
+            // Unlock audio threads on explicit PiP button click
             if (audioCtx && audioCtx.state === 'suspended') {
-                try { await audioCtx.resume(); } catch (e) {}
+                audioCtx.resume().catch(() => {});
             }
             startBackgroundAudioKeeper();
             if ('speechSynthesis' in window) {
@@ -1183,54 +1220,42 @@
                 window.speechSynthesis.speak(silentPing);
             }
 
-            try {
-                // Exit PiP if already active
-                if (document.pictureInPictureElement) {
-                    await document.exitPictureInPicture();
-                    return;
-                }
-
-                renderPiPCanvas();
-                if (!video.srcObject) {
-                    const stream = canvas.captureStream(15);
-                    video.srcObject = stream;
-                }
-
-                await video.play();
-
-                if (video.requestPictureInPicture) {
-                    await video.requestPictureInPicture();
-                } else if (video.webkitSetPresentationMode) {
-                    video.webkitSetPresentationMode('picture-in-picture');
-                } else {
-                    alert("Picture-in-Picture is not supported on this browser.");
-                    return;
-                }
-
-                // Start smooth HUD refresh loop
-                if (pipRenderInterval) clearInterval(pipRenderInterval);
-                pipRenderInterval = setInterval(renderPiPCanvas, 250);
-
-                if (pipBtn && pipStatus) {
-                    pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-950/60 text-sky-300 border border-sky-400 transition flex items-center gap-1.5 whitespace-nowrap';
-                    pipStatus.innerText = 'PiP Active';
-                }
-
-                video.addEventListener('leavepictureinpicture', () => {
-                    if (pipRenderInterval) {
-                        clearInterval(pipRenderInterval);
-                        pipRenderInterval = null;
-                    }
-                    if (pipBtn && pipStatus) {
-                        pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
-                        pipStatus.innerText = 'PiP HUD';
-                    }
-                }, { once: true });
-
-            } catch (err) {
-                console.warn("PiP launch error:", err);
-                alert("Unable to open Picture-in-Picture window. Ensure you tapped the button directly and your browser permits PiP.");
+            // Exit PiP if already active
+            if (document.pictureInPictureElement) {
+                document.exitPictureInPicture().catch(() => {});
+                return;
             }
+            if (video.webkitPresentationMode === 'picture-in-picture') {
+                video.webkitSetPresentationMode('inline');
+                return;
+            }
+
+            // Start video stream strictly inside this button gesture before requesting PiP
+            if (video.paused || video.readyState < 2) {
+                const playPromise = video.play();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise
+                        .then(() => enterPiPMode(video))
+                        .catch(() => enterPiPMode(video));
+                } else {
+                    enterPiPMode(video);
+                }
+            } else {
+                enterPiPMode(video);
+            }
+        }
+
+        // Bind PiP Exit Listeners Once (Standard + iOS Safari WebKit)
+        const pipVideoEl = document.getElementById('pip-video');
+        if (pipVideoEl) {
+            pipVideoEl.addEventListener('leavepictureinpicture', () => setPiPButtonState(false));
+            pipVideoEl.addEventListener('webkitpresentationmodechanged', () => {
+                if (pipVideoEl.webkitPresentationMode === 'picture-in-picture') {
+                    setPiPButtonState(true);
+                } else {
+                    setPiPButtonState(false);
+                }
+            });
         }
 
         function triggerHeaderAlertPulse() {
@@ -1244,13 +1269,10 @@
         }
 
         function toggleCommandDeckLock() {
-            const t = getActiveTranslation();
             if (isCommandDeckUnlocked) {
-                // Lock immediately
                 isCommandDeckUnlocked = false;
                 localStorage.setItem('commandDeckUnlocked', 'false');
             } else {
-                // Prompt for SVS4336
                 const rawInput = prompt("Enter Passcode to Unlock Instant Command Deck:");
                 const sanitizedInput = (rawInput || "").trim().toUpperCase();
 
@@ -1258,7 +1280,6 @@
                     isCommandDeckUnlocked = true;
                     localStorage.setItem('commandDeckUnlocked', 'true');
                     
-                    // Hardware Audio Warm-Up
                     if (audioCtx && audioCtx.state === 'suspended') {
                         audioCtx.resume().catch(() => {});
                     }
@@ -1309,11 +1330,9 @@
             if (!audioEnabled) return;
 
             if (action === "CANCEL") {
-                // Descending Cancel Chime
                 playBeep(440, 0.15);
                 setTimeout(() => playBeep(330, 0.25), 150);
             } else {
-                // Ascending Call Chime
                 playBeep(980, 0.25);
             }
 
@@ -1461,7 +1480,6 @@
         function speakCallout(teamNum, action = "CALL") {
             if (!audioEnabled || !('speechSynthesis' in window)) return;
             
-            // Force flush pending speech synthesis queue to prevent double-playback
             window.speechSynthesis.cancel();
 
             const teamKey = `team${teamNum}`;
@@ -1481,8 +1499,8 @@
             }
 
             const msg = new SpeechSynthesisUtterance(phrase);
-            msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang; // Dynamic locale
-            msg.rate = 1.25; // Accelerated tactical cadence
+            msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang;
+            msg.rate = 1.25;
             msg.pitch = 1.0;
             
             window.speechSynthesis.speak(msg);
@@ -1494,15 +1512,15 @@
             const now = Date.now();
             const threatId = now + "_" + Math.random().toString(36).substring(2, 7);
 
-            const prepDuration = 300; // 5 minutes default
-            const travelDuration = 30; // 30 seconds default
+            const prepDuration = 300;
+            const travelDuration = 30;
 
             const prepTargetTime = now + (prepDuration * 1000);
             const travelTargetTime = prepTargetTime + (travelDuration * 1000);
 
             const newThreat = {
                 threatId: threatId,
-                rallyType: rallyType, // ENEMY, TEAM_1, TEAM_2, TEAM_3
+                rallyType: rallyType,
                 createdAt: new Date().toISOString(),
                 status: "ACTIVE",
                 autoPurgeSec: 15,
@@ -1667,7 +1685,6 @@
         function getTeamLabel(teamKey) {
             if (!teamKey) return "";
             
-            // Normalize key to 'team1', 'team2', 'team3' regardless of format ('TEAM_1', 'Team 1', 'team1')
             const cleanKey = teamKey.toLowerCase().replace(/[^a-z0-9]/g, '');
             const config = teamConfig[cleanKey];
             
@@ -1678,7 +1695,6 @@
 
             let codeName = config.codeName || `Team ${cleanKey.replace('team', '')}`;
             
-            // Deduplicate leading "Team " prefix to prevent "Team Team X"
             if (/^team\s+/i.test(codeName)) {
                 codeName = codeName.replace(/^team\s+/i, 'Team ');
             }
@@ -1702,7 +1718,7 @@
             } catch (e) {}
         }
 
-        // Single-Rally Timer Nudge Functions (Epoch Timestamp Shift)
+        // Single-Rally Timer Nudge Functions
         function nudgePrepTime(threatId, deltaSec) {
             const t = threats.find(item => item.threatId === threatId);
             if (t) {
@@ -1787,12 +1803,10 @@
             threats.forEach(t => {
                 const travelTarget = t.timer.travelTargetTime || now;
                 
-                // If travel window reaches or passes zero, transition to IMPACT_COMPLETE
                 if (now >= travelTarget && t.status !== "IMPACT_COMPLETE") {
                     t.status = "IMPACT_COMPLETE";
                 }
 
-                // 15-second Post-Impact Auto-Purge Lifecycle
                 if (t.status === "IMPACT_COMPLETE") {
                     if (t.autoPurgeSec > 0) {
                         t.autoPurgeSec--;
@@ -1841,7 +1855,6 @@
             threats.forEach((t, index) => {
                 const isEnemy = (t.rallyType === "ENEMY");
                 
-                // Dynamic time calculations relative to current epoch timestamp
                 const prepTarget = t.timer.prepTargetTime || (now + (t.timer.prepSec || 300) * 1000);
                 const travelTarget = t.timer.travelTargetTime || (prepTarget + (t.timer.travelSec || 30) * 1000);
 
@@ -1851,10 +1864,8 @@
                 const remainingTravelMs = travelTarget - now;
                 const remainingTravelSec = Math.max(0, Math.floor(remainingTravelMs / 1000));
 
-                // Live Adjusted Travel Duration (when in Prep Phase)
                 const totalTravelDurationSec = Math.max(0, Math.floor((travelTarget - prepTarget) / 1000));
 
-                // Dynamic Display Value based on Active Phase
                 const isPrepPhase = (remainingPrepSec > 0);
                 const displayTravelSec = isPrepPhase ? totalTravelDurationSec : remainingTravelSec;
 
@@ -1934,7 +1945,7 @@
             });
         }
 
-        // Attach global window bindings for inline HTML onclick attributes
+        // Attach global window bindings
         window.setLanguage = setLanguage;
         window.toggleAudio = toggleAudio;
         window.togglePiPHUD = togglePiPHUD;
@@ -1955,10 +1966,8 @@
         window.nudgePrepTime = nudgePrepTime;
         window.nudgeTravelTime = nudgeTravelTime;
 
-        // Apply dynamic language UI on initial script execution
         applyLanguageUI();
 
-        // Check initial notification status on page load
         if ('Notification' in window && Notification.permission === 'granted') {
             const notifyBtn = document.getElementById('notify-btn');
             if (notifyBtn) {
@@ -1967,7 +1976,6 @@
             }
         }
 
-        // Background Sleep / Tab Visibility Resume Listener
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 if (audioCtx && audioCtx.state === 'suspended') {
@@ -1979,7 +1987,6 @@
                     window.speechSynthesis.speak(silentPing);
                 }
             } else {
-                // Tab pushed to background: Engage silent audio keeper to retain socket connection & priority
                 startBackgroundAudioKeeper();
             }
         });
