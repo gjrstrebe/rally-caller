@@ -47,21 +47,6 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); filter: brightness(1); }
         }
-        @keyframes hazard-stripes {
-            0% { background-position: 0 0; }
-            100% { background-position: 50px 50px; }
-        }
-        .expel-overlay {
-            background: repeating-linear-gradient(
-                -45deg,
-                rgba(234, 179, 8, 0.9),
-                rgba(234, 179, 8, 0.9) 25px,
-                rgba(15, 23, 42, 0.95) 25px,
-                rgba(15, 23, 42, 0.95) 50px
-            );
-            background-size: 70px 70px;
-            animation: hazard-stripes 1.5s linear infinite;
-        }
     </style>
 </head>
 <body class="h-full flex flex-col p-3 sm:p-5 max-w-7xl mx-auto relative overflow-x-hidden">
@@ -100,11 +85,17 @@
                 </select>
             </div>
 
+            <!-- COMMANDER SESSION STATUS PILL -->
+            <button id="commander-status-btn" onclick="window.toggleCommanderSession()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5 whitespace-nowrap" title="Click to unlock or lock Commander session">
+                <i id="commander-status-icon" class="fa-solid fa-lock text-xs"></i>
+                <span id="commander-status-text">Commander Locked</span>
+            </button>
+
             <a href="https://ko-fi.com/asktechdad" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow transition flex items-center gap-1.5 whitespace-nowrap">
                 <i class="fa-solid fa-mug-hot text-xs"></i>
                 <span id="ui-kofi-btn">Support on Ko-fi</span>
             </a>
-            <button id="audio-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 whitespace-nowrap">
+            <button id="audio-btn" onclick="window.toggleAudio()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 whitespace-nowrap">
                 <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
                 <span id="audio-status">Audio ON</span>
             </button>
@@ -112,15 +103,69 @@
                 <i class="fa-solid fa-up-right-from-square text-xs"></i>
                 <span id="ui-pip-status">PiP HUD</span>
             </button>
-            <button id="notify-btn" onclick="requestNotificationPermission()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5 whitespace-nowrap">
+            <button id="notify-btn" onclick="window.requestNotificationPermission()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5 whitespace-nowrap">
                 <i class="fa-solid fa-bell text-xs"></i>
                 <span id="ui-notify-status">Allow Alerts</span>
             </button>
-            <button onclick="clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition whitespace-nowrap">
+            <button onclick="window.clearAllThreats()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 transition whitespace-nowrap">
                 <i class="fa-solid fa-trash-can mr-1"></i> <span id="ui-clear-all-btn">Clear All</span>
             </button>
         </div>
     </header>
+
+    <!-- MULTI-TENANT ROOM BAR -->
+    <div class="mb-3 px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+            <span id="room-badge" class="px-3 py-1 rounded-xl text-xs font-display font-extrabold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-globe"></i>
+                <span id="room-badge-text">MAIN STATE ROOM</span>
+            </span>
+            <span id="room-scope-hint" class="hidden md:inline text-[11px] text-slate-400">Unified state-wide SvS channel</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="window.copyRoomLink()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-link text-sky-400 text-[11px]"></i>
+                <span>Copy Room Link</span>
+            </button>
+            <button type="button" onclick="window.openCreateRoomModal()" class="px-2.5 py-1 rounded-lg bg-sky-950/70 hover:bg-sky-900/80 text-sky-300 border border-sky-500/40 text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus text-[11px]"></i>
+                <span>Private Room</span>
+            </button>
+            <button id="back-main-room-btn" type="button" onclick="window.switchToRoom('')" class="hidden px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                <span>Main State Room</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- TOP-LEVEL VIEW SWITCHER TABS -->
+    <nav class="mb-4 flex items-center justify-between gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800">
+        <div class="grid grid-cols-2 gap-1.5 w-full sm:w-auto">
+            <button id="tab-btn-radar" onclick="window.switchMainTab('radar')" class="px-4 py-2 rounded-xl font-display font-bold text-xs uppercase tracking-wider bg-amber-500 text-slate-950 shadow transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-radar"></i>
+                <span id="ui-tab-radar">Live Castle Radar</span>
+            </button>
+            <button id="tab-btn-custom" onclick="window.switchMainTab('custom')" class="px-4 py-2 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-slate-400 hover:text-white hover:bg-slate-800/70 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-layer-group text-sky-400"></i>
+                <span id="ui-tab-custom">Build Your Own Sync</span>
+            </button>
+        </div>
+        <div id="sync-status-pill" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="roster-count-badge">Roster: 0 Logged</span>
+        </div>
+    </nav>
+
+    <!-- NON-BLOCKING TOAST NOTIFICATION BANNER -->
+    <div id="app-toast" class="hidden fixed bottom-5 right-5 z-50 bg-emerald-500 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-emerald-300 transition-all">
+        <i class="fa-solid fa-circle-check text-sm"></i>
+        <span id="app-toast-text">Action completed</span>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: LIVE CASTLE RADAR                                              -->
+    <!-- ===================================================================== -->
+    <div id="view-radar" class="flex-grow flex flex-col">
 
     <!-- UNIVERSAL ALERT TICKER BANNER -->
     <div id="global-alert-ticker" class="hidden mb-3 px-4 py-2.5 rounded-xl bg-slate-900 border-2 border-amber-400 text-amber-300 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-xl flex items-center justify-between transition-all">
@@ -131,36 +176,36 @@
         <span id="ui-live-dispatch-tag" class="text-[10px] text-amber-400/70 font-mono tracking-widest hidden sm:inline">LIVE DISPATCH</span>
     </div>
 
-    <!-- CASTLE OCCUPANT BAR & WHALE EXPEL BROADCAST -->
+    <!-- CASTLE OCCUPANT BAR & COMMANDER-GATED SWAP / EXPEL BROADCAST -->
     <div class="mb-3 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border border-amber-500/30 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
             <span class="text-xs font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
                 <i class="fa-solid fa-shield-cat"></i> <span id="ui-occupant-label">Castle Occupant:</span>
             </span>
             <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <button id="occupant-ENEMY" onclick="setCastleOccupant('ENEMY')" class="px-3 py-1 rounded-lg text-xs font-bold transition">ENEMY</button>
-                <button id="occupant-TEAM_1" onclick="setCastleOccupant('TEAM_1')" class="px-3 py-1 rounded-lg text-xs font-bold transition">TEAM 1</button>
-                <button id="occupant-TEAM_2" onclick="setCastleOccupant('TEAM_2')" class="px-3 py-1 rounded-lg text-xs font-bold transition">TEAM 2</button>
-                <button id="occupant-TEAM_3" onclick="setCastleOccupant('TEAM_3')" class="px-3 py-1 rounded-lg text-xs font-bold transition">TEAM 3</button>
+                <button id="occupant-ENEMY" onclick="window.setCastleOccupant('ENEMY')" class="px-3 py-1 rounded-lg text-xs font-bold transition">ENEMY</button>
+                <button id="occupant-TEAM_1" onclick="window.setCastleOccupant('TEAM_1')" class="px-3 py-1 rounded-lg text-xs font-bold transition">TEAM 1</button>
+                <button id="occupant-TEAM_2" onclick="window.setCastleOccupant('TEAM_2')" class="px-3 py-1 rounded-lg text-xs font-bold transition">TEAM 2</button>
+                <button id="occupant-TEAM_3" onclick="window.setCastleOccupant('TEAM_3')" class="px-3 py-1 rounded-lg text-xs font-bold transition">TEAM 3</button>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
-            <!-- CASTLE SWAP BROADCAST BUTTON -->
-            <button onclick="window.triggerCastleSwapAlert()" class="px-3.5 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-yellow-300 shadow-md active:scale-95 transition flex items-center gap-1.5">
+            <!-- CASTLE SWAP BROADCAST BUTTON (COMMANDER PIN REQUIRED) -->
+            <button onclick="window.triggerCastleSwapAlert()" class="px-3.5 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-yellow-300 shadow-md active:scale-95 transition flex items-center gap-1.5" title="Commander PIN Required">
                 <i class="fa-solid fa-rotate text-sm"></i>
                 <span id="ui-btn-castle-swap">CASTLE SWAP</span>
             </button>
 
-            <!-- REFACTORED EXPEL BUTTON (NO FULL SCREEN OVERLAY) -->
-            <button onclick="window.triggerExpelAllAlert()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-amber-300 shadow-md active:scale-95 transition flex items-center gap-1.5">
+            <!-- EXPEL ALL BROADCAST BUTTON (COMMANDER PIN REQUIRED) -->
+            <button onclick="window.triggerExpelAllAlert()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider border border-amber-300 shadow-md active:scale-95 transition flex items-center gap-1.5" title="Commander PIN Required">
                 <i class="fa-solid fa-triangle-exclamation text-sm"></i>
                 <span id="ui-btn-notify-expel">NOTIFY: EXPEL ALL</span>
             </button>
         </div>
     </div>
 
-    <!-- DYNAMIC ALLIANCE TAG CONFIGURATION BAR WITH PASSCODE LOCK -->
+    <!-- DYNAMIC ALLIANCE TAG CONFIGURATION BAR -->
     <div class="mb-3 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wide">
             <i class="fa-solid fa-radio text-sm"></i>
@@ -187,13 +232,13 @@
             </div>
 
             <!-- Lock / Unlock Toggle Button -->
-            <button id="lock-btn" onclick="toggleLock()" class="text-[11px] font-semibold text-amber-400 px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/30 transition flex items-center gap-1.5">
+            <button id="lock-btn" onclick="window.toggleLock()" class="text-[11px] font-semibold text-amber-400 px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/30 transition flex items-center gap-1.5">
                 <i id="lock-icon" class="fa-solid fa-lock text-xs"></i>
                 <span id="lock-label">Edit Labels</span>
             </button>
 
             <!-- Reset Button -->
-            <button onclick="resetDefaultTags()" class="text-[11px] font-semibold text-slate-400 hover:text-slate-200 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1">
+            <button onclick="window.resetDefaultTags()" class="text-[11px] font-semibold text-slate-400 hover:text-slate-200 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1">
                 <i class="fa-solid fa-rotate-left"></i> <span id="ui-reset-btn">Reset</span>
             </button>
         </div>
@@ -258,14 +303,12 @@
             <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-layer-group text-amber-400"></i> <span id="ui-log-standalone-title">Log Standalone Rally:</span>
             </div>
-            <div id="action-cluster-bar" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <!-- Action Buttons Rendered Dynamically via renderActionCluster() -->
-            </div>
+            <div id="action-cluster-bar" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
         </div>
 
         <div id="undo-toast" class="hidden px-4 py-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 text-xs font-bold flex items-center justify-between gap-3">
             <span id="ui-rally-logged-toast">Rally Logged!</span>
-            <button onclick="undoLastLog()" class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-extrabold hover:bg-amber-400 transition flex items-center gap-1">
+            <button onclick="window.undoLastLog()" class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-extrabold hover:bg-amber-400 transition flex items-center gap-1">
                 <i class="fa-solid fa-rotate-left"></i> <span id="ui-undo-btn">Undo</span>
             </button>
         </div>
@@ -281,7 +324,6 @@
         </div>
 
         <div id="threat-feed" class="flex flex-col gap-4">
-            <!-- Empty state placeholder -->
             <div id="empty-msg" class="text-center py-16 px-4 bg-slate-900/40 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-3">
                 <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-xl">
                     <i class="fa-solid fa-shield-halved"></i>
@@ -292,9 +334,300 @@
         </div>
     </main>
 
-    <!-- OFFSCREEN PIP CANVAS & VIDEO STREAM ELEMENTS (Playback triggered ONLY by PiP HUD button) -->
+    </div> <!-- END TAB 1: VIEW-RADAR -->
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: BUILD YOUR OWN SYNC & ALLIANCE MARCH ROSTER                    -->
+    <!-- ===================================================================== -->
+    <div id="view-custom-sync" class="hidden flex-grow flex flex-col gap-5 pb-8">
+
+        <!-- SECTION A: ALLIANCE MARCH ROSTER -->
+        <section class="glass-panel rounded-2xl p-4 sm:p-5 border border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950/20 to-slate-900">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div>
+                    <h2 class="font-display text-sm sm:text-base font-extrabold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear"></i> <span id="ui-roster-title">Alliance March Time Roster (Live Sync)</span>
+                    </h2>
+                    <p id="ui-roster-sub" class="text-xs text-slate-400">Players or Rally Leads can log march durations (in seconds) to Sunfire Castle below so leads can assign them to sync slots.</p>
+                </div>
+                <button onclick="window.clearAllRoster()" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 transition">
+                    <i class="fa-solid fa-lock mr-1 text-[10px]"></i><span id="ui-clear-roster-btn">Clear Roster</span>
+                </button>
+            </div>
+
+            <!-- Add / Update Roster Entry Form -->
+            <form onsubmit="window.saveRosterEntry(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 mb-4 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                <div class="sm:col-span-5">
+                    <label id="ui-roster-name-lbl" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Player Name / Callsign</label>
+                    <input type="text" id="roster-player-name" required maxlength="24" placeholder="e.g. IceKing / Whale1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-400">
+                </div>
+                <div class="sm:col-span-3">
+                    <label id="ui-roster-sec-lbl" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">March Time (Seconds)</label>
+                    <input type="number" id="roster-march-sec" required min="1" max="1800" step="1" placeholder="e.g. 14" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-amber-400 font-mono font-bold focus:outline-none focus:border-sky-400">
+                </div>
+                <div class="sm:col-span-2">
+                    <label id="ui-roster-role-lbl" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Role Tag (Opt)</label>
+                    <select id="roster-role-tag" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-400">
+                        <option value="Rally Lead">Rally Lead</option>
+                        <option value="Solo">Solo</option>
+                        <option value="Joiner">Joiner</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2 flex items-end">
+                    <button type="submit" class="w-full py-2 px-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider shadow transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> <span id="ui-save-march-btn">Save March</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Logged Roster Chips -->
+            <div id="roster-list-container" class="flex flex-wrap gap-2">
+                <span class="text-xs text-slate-500 italic">No player march times logged yet. Add players above to populate dropdowns.</span>
+            </div>
+        </section>
+
+        <!-- SECTION B: 2-COLUMN CUSTOM QUEUE BUILDER & LIVE COUNTDOWN ENGINE -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            <!-- LEFT COLUMN (5 COLS): TIMING CONTROLS & SLOT BUILDER -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
+
+                <!-- Timing Path Controls -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <h3 class="font-display text-sm font-extrabold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> <span id="ui-timing-setup-title">Timing Anchor Setup</span>
+                        </h3>
+                        <button id="custom-tz-btn" onclick="window.toggleCustomTimezone()" class="px-2.5 py-1 rounded-lg bg-sky-950/60 hover:bg-sky-900/70 text-sky-300 text-[11px] font-bold border border-sky-500/40 transition font-mono">
+                            <i class="fa-solid fa-globe mr-1"></i><span id="custom-tz-text">UTC</span>
+                        </button>
+                    </div>
+
+                    <!-- 3 Sub-Path Selector -->
+                    <div class="grid grid-cols-3 gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                        <button id="custom-path-now" onclick="window.setCustomPath('now')" class="py-2 px-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition">Launch NOW</button>
+                        <button id="custom-path-timer" onclick="window.setCustomPath('timer')" class="py-2 px-1 rounded-lg text-[11px] font-bold text-white bg-purple-900/70 border border-purple-500/40 transition">Countdown</button>
+                        <button id="custom-path-time" onclick="window.setCustomPath('time')" class="py-2 px-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition">Target Time</button>
+                    </div>
+
+                    <!-- Countdown Path Controls (Default Active at 00:05) -->
+                    <div id="custom-timer-box" class="p-3 bg-purple-950/30 rounded-xl border border-purple-800/50 space-y-2.5">
+                        <div class="flex justify-between items-center gap-2">
+                            <span id="ui-countdown-before-lbl" class="text-xs font-bold text-purple-300">Countdown Before Launch</span>
+                            <div class="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-lg border border-purple-500/40 font-mono text-sm font-extrabold text-purple-300" title="Click minutes or seconds to type directly">
+                                <input type="number" id="custom-timer-min-input" min="0" max="59" value="00" onchange="window.setCustomTimerFromInputs()" class="w-8 bg-transparent text-center text-purple-200 focus:outline-none focus:bg-purple-900/40 rounded">
+                                <span>:</span>
+                                <input type="number" id="custom-timer-sec-input" min="0" max="59" value="05" onchange="window.setCustomTimerFromInputs()" class="w-8 bg-transparent text-center text-purple-200 focus:outline-none focus:bg-purple-900/40 rounded">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                            <button type="button" onclick="window.adjustCustomTimer(60)" class="py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 font-mono font-bold">+1m</button>
+                            <button type="button" onclick="window.adjustCustomTimer(-60)" class="py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 font-mono font-bold">-1m</button>
+                            <button type="button" onclick="window.adjustCustomTimer(10)" class="py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 font-mono font-bold">+10s</button>
+                            <button type="button" onclick="window.adjustCustomTimer(-10)" class="py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 font-mono font-bold">-10s</button>
+                            <button type="button" onclick="window.adjustCustomTimer(1)" class="py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-emerald-300 font-mono font-bold">+1s</button>
+                            <button type="button" onclick="window.adjustCustomTimer(-1)" class="py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-amber-300 font-mono font-bold">-1s</button>
+                        </div>
+                    </div>
+
+                    <!-- Target Time Path Controls -->
+                    <div id="custom-time-box" class="hidden p-3 bg-indigo-950/30 rounded-xl border border-indigo-800/50 space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <label id="custom-target-label" class="block text-xs font-semibold text-slate-300">Target Impact Time (UTC)</label>
+                            <button type="button" onclick="window.populateCustomTargetDefault()" class="text-[10px] font-mono font-bold text-sky-400 hover:text-sky-300 underline">Set Earliest</button>
+                        </div>
+                        <input type="datetime-local" id="custom-target-input" step="1" oninput="window.validateCustomTargetInput()" onchange="window.validateCustomTargetInput()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-sky-400">
+                        <div class="text-[10px] font-mono text-amber-400 flex items-center justify-between">
+                            <span>Earliest Valid Impact:</span>
+                            <span id="custom-earliest-impact-hint">--:--:--</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                        <button onclick="window.triggerCustomQueue()" class="flex-grow py-3 px-4 rounded-xl font-display font-extrabold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-600 hover:from-purple-500 hover:to-sky-500 active:scale-[0.98] transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> <span id="ui-gen-queue-btn">Generate & Broadcast Queue</span>
+                        </button>
+                        <button onclick="window.resetCustomQueue()" title="Commander PIN Required: Clear Active Triggers" class="px-3.5 py-3 rounded-xl bg-red-950/50 hover:bg-red-900/70 text-red-300 border border-red-700/50 text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-lock text-[10px]"></i>
+                            <span id="ui-clear-triggers-btn">Clear Triggers</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Queue Slots Builder -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-display text-sm font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project"></i> <span id="ui-attack-slots-title">Attack Queue Slots</span>
+                        </h3>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="window.addCustomSlot('solo')" class="px-2.5 py-1.5 rounded-lg bg-sky-950 hover:bg-sky-900 border border-sky-500/40 text-xs font-bold text-sky-300 transition">
+                                <span id="ui-add-solo-btn">+ Add Solo</span>
+                            </button>
+                            <button onclick="window.addCustomSlot('rally')" class="px-2.5 py-1.5 rounded-lg bg-amber-950 hover:bg-amber-900 border border-amber-500/40 text-xs font-bold text-amber-300 transition">
+                                <span id="ui-add-rally-btn">+ Add Rally</span>
+                            </button>
+                            <button type="button" onclick="window.resetCustomSlotsToDefault()" title="Reset to 2 Rallies (0s offset)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-300 transition">
+                                <i class="fa-solid fa-rotate-left mr-1 text-[10px]"></i><span>Reset</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p id="ui-attack-slots-sub" class="text-[11px] text-slate-400">Assign a player from the Alliance Roster or customize march time and impact offset (`0` hits simultaneously with anchor).</p>
+
+                    <div id="custom-slots-list" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN (7 COLS): LIVE COUNTDOWNS & 1-TAP UTC ORDERS -->
+            <div class="lg:col-span-7 flex flex-col gap-5">
+
+                <!-- Target Anchor Summary Bar -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div id="ui-calc-impact-lbl" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Calculated Target Impact Anchor</div>
+                        <div id="custom-impact-display" class="font-display text-xl sm:text-2xl font-extrabold font-mono text-emerald-400">AWAITING QUEUE</div>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <div id="ui-earliest-start-lbl" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Earliest Lead Start</div>
+                        <div id="custom-start-display" class="text-sm font-bold font-mono text-slate-200">--:--:--</div>
+                    </div>
+                </div>
+
+                <!-- Chronological Dispatch Trigger Cards -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> <span id="ui-dispatch-triggers-title">Dispatch Trigger Countdowns (Chronological)</span>
+                        </h3>
+                        <span id="ui-live-synced-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-sky-300 border border-sky-500/30">Live Synced</span>
+                    </div>
+
+                    <div id="custom-cards-list" class="space-y-3"></div>
+                </div>
+
+                <!-- 1-Tap UTC Alliance Share Center -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-share-nodes text-sky-400"></i> <span id="ui-share-center-title">Alliance Share Center (1-Tap UTC Orders)</span>
+                        </h3>
+                        <span id="ui-always-utc-badge" class="text-[10px] text-slate-500 font-mono">Always Copies in UTC</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button onclick="window.copyCustomOrder('compact')" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-left transition">
+                            <div class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-compress"></i> <span id="ui-share-compact-title">Game Chat</span>
+                            </div>
+                            <div id="ui-share-compact-sub" class="text-[10px] text-slate-400 mt-0.5">Compact UTC lines</div>
+                        </button>
+                        <button onclick="window.copyCustomOrder('rally')" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition">
+                            <div class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-crown"></i> <span id="ui-share-rally-title">Rallies Only</span>
+                            </div>
+                            <div id="ui-share-rally-sub" class="text-[10px] text-slate-400 mt-0.5">5m prep launches</div>
+                        </button>
+                        <button onclick="window.copyCustomOrder('solos')" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition">
+                            <div class="text-xs font-bold text-sky-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-jet-fighter"></i> <span id="ui-share-solos-title">Solos Only</span>
+                            </div>
+                            <div id="ui-share-solos-sub" class="text-[10px] text-slate-400 mt-0.5">Solo dispatch UTCs</div>
+                        </button>
+                        <button onclick="window.copyCustomOrder('full')" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition">
+                            <div class="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-lines"></i> <span id="ui-share-full-title">Full Orders</span>
+                            </div>
+                            <div id="ui-share-full-sub" class="text-[10px] text-slate-400 mt-0.5">Complete breakdown</div>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div> <!-- END TAB 2: VIEW-CUSTOM-SYNC -->
+
+    <!-- OFFSCREEN PIP CANVAS & VIDEO STREAM ELEMENTS -->
     <canvas id="pip-canvas" width="640" height="240" class="hidden"></canvas>
     <video id="pip-video" width="640" height="240" class="fixed -left-[9999px] top-0 w-1 h-1 opacity-0 pointer-events-none" playsinline webkit-playsinline muted></video>
+
+    <!-- IN-APP COMMANDER PIN MODAL -->
+    <div id="passcode-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-5 border border-amber-500/40 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-amber-400 font-display font-extrabold text-sm uppercase tracking-wider">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Commander Verification</span>
+                </div>
+                <button type="button" onclick="window.closePasscodeModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p id="passcode-modal-desc" class="text-xs text-slate-300">Enter Commander PIN to unlock session:</p>
+            <input type="password" id="passcode-modal-input" autocomplete="off" placeholder="Enter Commander PIN..."
+                onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.submitPasscodeModal(); }"
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono tracking-widest uppercase focus:outline-none focus:border-amber-400">
+            <div class="flex items-center justify-end gap-2 pt-1">
+                <button type="button" onclick="window.closePasscodeModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+                    Cancel
+                </button>
+                <button type="button" onclick="window.submitPasscodeModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider shadow transition">
+                    Unlock
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IN-APP DESTRUCTIVE ACTION CONFIRMATION MODAL -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-5 border border-red-500/40 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-red-400 font-display font-extrabold text-sm uppercase tracking-wider">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="confirm-modal-title">Confirm Action</span>
+                </div>
+                <button type="button" onclick="window.closeConfirmModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p id="confirm-modal-desc" class="text-xs text-slate-300">Are you sure you want to proceed?</p>
+            <div class="flex items-center justify-end gap-2 pt-1">
+                <button type="button" onclick="window.closeConfirmModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+                    Cancel
+                </button>
+                <button type="button" onclick="window.submitConfirmModal()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-display font-extrabold text-xs uppercase tracking-wider shadow transition">
+                    Confirm Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IN-APP PRIVATE ROOM MODAL -->
+    <div id="room-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-5 border border-sky-500/40 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-sky-400 font-display font-extrabold text-sm uppercase tracking-wider">
+                    <i class="fa-solid fa-door-open"></i>
+                    <span>Create / Join Private Room</span>
+                </div>
+                <button type="button" onclick="window.closeCreateRoomModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-300">Enter a unique room code (e.g., <span class="font-mono text-sky-300">ACE123</span> or <span class="font-mono text-sky-300">FOUNDRY-A</span>). Both tabs, roster, audio commands, and PiP HUD isolate automatically to this room.</p>
+            <input type="text" id="room-modal-input" maxlength="24" placeholder="e.g. ACE123"
+                onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.submitCreateRoomModal(); }"
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono tracking-wider uppercase focus:outline-none focus:border-sky-400">
+            <div class="flex items-center justify-end gap-2 pt-1">
+                <button type="button" onclick="window.closeCreateRoomModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+                    Cancel
+                </button>
+                <button type="button" onclick="window.submitCreateRoomModal()" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-display font-extrabold text-xs uppercase tracking-wider shadow transition">
+                    Open & Copy Link
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- LOGIC SCRIPT (FIREBASE ESM MODULE) -->
     <script type="module">
@@ -318,9 +651,134 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Firestore Paths & Document References
-        const sessionDocRef = doc(db, "sessions", "svs_castle_live");
-        const threatsCollRef = collection(db, "sessions", "svs_castle_live", "threats");
+        // --- MULTI-TENANT ROOM RESOLUTION ---
+        const DEFAULT_MAIN_ROOM_ID = "svs_castle_live";
+
+        function sanitizeRoomSlug(raw) {
+            return (raw || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 24);
+        }
+
+        function resolveInitialRoomSlug() {
+            const params = new URLSearchParams(window.location.search);
+            return sanitizeRoomSlug(params.get("room") || "");
+        }
+
+        let activeRoomSlug = resolveInitialRoomSlug(); // "" means Main State Room
+        let activeFirestoreRoomId = activeRoomSlug ? `room_${activeRoomSlug.toLowerCase()}` : DEFAULT_MAIN_ROOM_ID;
+
+        let sessionDocRef = doc(db, "sessions", activeFirestoreRoomId);
+        let threatsCollRef = collection(db, "sessions", activeFirestoreRoomId, "threats");
+        let rosterCollRef = collection(db, "sessions", activeFirestoreRoomId, "roster");
+
+        let unsubSession = null;
+        let unsubThreats = null;
+        let unsubRoster = null;
+
+        function updateRoomHeaderUI() {
+            const badge = document.getElementById("room-badge");
+            const badgeText = document.getElementById("room-badge-text");
+            const hint = document.getElementById("room-scope-hint");
+            const backBtn = document.getElementById("back-main-room-btn");
+
+            if (!badge || !badgeText) return;
+
+            if (activeRoomSlug) {
+                badge.className = "px-3 py-1 rounded-xl text-xs font-display font-extrabold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-500/40 flex items-center gap-1.5";
+                badge.innerHTML = `<i class="fa-solid fa-lock"></i><span>PRIVATE ROOM: ${activeRoomSlug}</span>`;
+                if (hint) hint.innerText = "Isolated alliance room (Radar, Roster, Audio & PiP scoped here)";
+                if (backBtn) backBtn.classList.remove("hidden");
+            } else {
+                badge.className = "px-3 py-1 rounded-xl text-xs font-display font-extrabold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/40 flex items-center gap-1.5";
+                badge.innerHTML = `<i class="fa-solid fa-globe"></i><span>MAIN STATE ROOM</span>`;
+                if (hint) hint.innerText = "Unified state-wide SvS channel";
+                if (backBtn) backBtn.classList.add("hidden");
+            }
+        }
+
+        function switchToRoom(rawSlug, shouldCopyLink = false) {
+            const cleanSlug = sanitizeRoomSlug(rawSlug);
+            activeRoomSlug = cleanSlug;
+            activeFirestoreRoomId = cleanSlug ? `room_${cleanSlug.toLowerCase()}` : DEFAULT_MAIN_ROOM_ID;
+
+            const url = new URL(window.location.href);
+            if (cleanSlug) {
+                url.searchParams.set("room", cleanSlug);
+            } else {
+                url.searchParams.delete("room");
+            }
+            window.history.replaceState({}, "", url.toString());
+
+            // Reset local room-scoped state before attaching new listeners
+            threats = [];
+            allianceRoster = [];
+            castleOccupant = "ENEMY";
+            customTImpact = null;
+            customTRallyStart = null;
+            customTriggers = {};
+            lastCustomCardsSignature = "";
+            activePipCustomTriggerId = null;
+
+            sessionDocRef = doc(db, "sessions", activeFirestoreRoomId);
+            threatsCollRef = collection(db, "sessions", activeFirestoreRoomId, "threats");
+            rosterCollRef = collection(db, "sessions", activeFirestoreRoomId, "roster");
+
+            updateRoomHeaderUI();
+            renderOccupantButtons();
+            renderActionCluster();
+            renderInstantCommandDeck();
+            renderRosterList();
+            calculateCustomSync();
+            updateDashboard();
+            renderPiPCanvas();
+
+            if (currentUser) {
+                subscribeToLiveSession();
+            }
+
+            if (shouldCopyLink) {
+                copyRoomLink();
+            } else {
+                showAppToast(cleanSlug ? `Switched to Private Room: ${cleanSlug}` : "Switched to Main State Room");
+            }
+        }
+
+        function copyRoomLink() {
+            const ta = document.createElement("textarea");
+            ta.value = window.location.href;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand("copy");
+                showAppToast(activeRoomSlug ? `Copied invite link for Room ${activeRoomSlug}!` : "Copied Main State Room link!");
+            } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        function openCreateRoomModal() {
+            const modal = document.getElementById("room-modal");
+            const input = document.getElementById("room-modal-input");
+            if (!modal || !input) return;
+            input.value = activeRoomSlug || "";
+            modal.classList.remove("hidden");
+            setTimeout(() => input.focus(), 30);
+        }
+
+        function closeCreateRoomModal() {
+            document.getElementById("room-modal")?.classList.add("hidden");
+        }
+
+        function submitCreateRoomModal() {
+            const input = document.getElementById("room-modal-input");
+            const slug = sanitizeRoomSlug(input?.value || "");
+            if (!slug) {
+                showAppToast("Enter a valid room name (letters/numbers)", true);
+                return;
+            }
+            closeCreateRoomModal();
+            switchToRoom(slug, true);
+        }
 
         // UI & AUDIO INTERNATIONALIZATION DICTIONARY
         const I18N_DICTIONARY = {
@@ -332,6 +790,50 @@
                 audioOn: "Audio ON",
                 audioOff: "Audio OFF",
                 clearAll: "Clear All",
+                tabRadar: "Live Castle Radar",
+                tabCustom: "Build Your Own Sync",
+                rosterLoggedBadge: (n) => `Roster: ${n} Logged`,
+                rosterTitle: "Alliance March Time Roster (Live Sync)",
+                rosterSub: "Players or Rally Leads can log march durations (in seconds) to Sunfire Castle below so leads can assign them to sync slots.",
+                clearRoster: "Clear Roster",
+                rosterNameLbl: "Player Name / Callsign",
+                rosterSecLbl: "March Time (Seconds)",
+                rosterRoleLbl: "Role Tag (Opt)",
+                saveMarchBtn: "Save March",
+                timingSetupTitle: "Timing Anchor Setup",
+                pathNow: "Launch NOW",
+                pathTimer: "Countdown",
+                pathTime: "Target Time",
+                countdownBeforeLbl: "Countdown Before Launch",
+                genQueueBtn: "Generate & Broadcast Queue",
+                clearTriggersBtn: "Clear Triggers",
+                attackSlotsTitle: "Attack Queue Slots",
+                addSoloBtn: "+ Add Solo",
+                addRallyBtn: "+ Add Rally",
+                attackSlotsSub: "Assign a player from the Alliance Roster or customize march time and impact offset (0 hits simultaneously with anchor).",
+                assignRosterLbl: "Assign From Alliance Roster",
+                assignRosterDefault: "-- Manual Entry / Select Logged Player --",
+                slotTypeLbl: "Type",
+                slotMarchLbl: "March (Sec)",
+                slotOffsetLbl: "Impact Offset (s)",
+                calcImpactLbl: "Calculated Target Impact Anchor",
+                earliestStartLbl: "Earliest Lead Start",
+                awaitingQueue: "AWAITING QUEUE",
+                dispatchTriggersTitle: "Dispatch Trigger Countdowns (Chronological)",
+                liveSyncedBadge: "Live Synced",
+                noActiveQueueTitle: "No Active Sync Queue",
+                noActiveQueueSub: "Assign players from the roster on the left and press \"Generate & Broadcast Queue\".",
+                popOutPip: "Pop-Out PiP",
+                shareCenterTitle: "Alliance Share Center (1-Tap UTC Orders)",
+                alwaysUtcBadge: "Always Copies in UTC",
+                shareCompactTitle: "Game Chat",
+                shareCompactSub: "Compact UTC lines",
+                shareRallyTitle: "Rallies Only",
+                shareRallySub: "5m prep launches",
+                shareSolosTitle: "Solos Only",
+                shareSolosSub: "Solo dispatch UTCs",
+                shareFullTitle: "Full Orders",
+                shareFullSub: "Complete breakdown",
                 liveDispatch: "LIVE DISPATCH",
                 occupantLabel: "Castle Occupant:",
                 castleSwapBtn: "CASTLE SWAP",
@@ -374,6 +876,50 @@
                 audioOn: "音效 開啟",
                 audioOff: "音效 關閉",
                 clearAll: "清空全部",
+                tabRadar: "即時城堡雷達",
+                tabCustom: "自訂集結同步器",
+                rosterLoggedBadge: (n) => `名單: 已登錄 ${n} 人`,
+                rosterTitle: "聯盟行軍時間名單 (即時同步)",
+                rosterSub: "成員或車頭可在此登錄前往太陽城的行軍秒數，方便指揮官直接選取排程。",
+                clearRoster: "清空名單",
+                rosterNameLbl: "玩家名稱 / 代號",
+                rosterSecLbl: "行軍時間 (秒)",
+                rosterRoleLbl: "定位標籤 (選填)",
+                saveMarchBtn: "儲存秒數",
+                timingSetupTitle: "時間基準設定",
+                pathNow: "立即發車",
+                pathTimer: "倒數計時",
+                pathTime: "指定時間",
+                countdownBeforeLbl: "發起前倒數秒數",
+                genQueueBtn: "生成並廣播排程",
+                clearTriggersBtn: "清除計時",
+                attackSlotsTitle: "進攻排程欄位",
+                addSoloBtn: "+ 新增單撞",
+                addRallyBtn: "+ 新增集結",
+                attackSlotsSub: "從聯盟名單指派玩家，或自訂行軍秒數與撞擊偏差（0 代表同時撞擊）。",
+                assignRosterLbl: "從聯盟名單指派玩家",
+                assignRosterDefault: "-- 手動輸入 / 選擇已登錄玩家 --",
+                slotTypeLbl: "類型",
+                slotMarchLbl: "行軍 (秒)",
+                slotOffsetLbl: "撞擊偏差 (秒)",
+                calcImpactLbl: "預計目標撞擊基準時間",
+                earliestStartLbl: "最早車頭出發時間",
+                awaitingQueue: "等待生成排程",
+                dispatchTriggersTitle: "出發倒數計時器 (按時間排序)",
+                liveSyncedBadge: "即時同步中",
+                noActiveQueueTitle: "尚無啟用中的同步排程",
+                noActiveQueueSub: "請在左側指派玩家並點擊「生成並廣播排程」。",
+                popOutPip: "懸浮子母畫面",
+                shareCenterTitle: "聯盟指令分享中心 (一鍵複製 UTC)",
+                alwaysUtcBadge: "一律以 UTC 時間複製",
+                shareCompactTitle: "遊戲頻道精簡版",
+                shareCompactSub: "適合遊戲內聊天室",
+                shareRallyTitle: "僅集結指令",
+                shareRallySub: "5分鐘集結發起時間",
+                shareSolosTitle: "僅單撞指令",
+                shareSolosSub: "單人出發 UTC 時間",
+                shareFullTitle: "完整戰術指令",
+                shareFullSub: "詳細秒數與偏差明細",
                 liveDispatch: "即時廣播",
                 occupantLabel: "城堡占領者:",
                 castleSwapBtn: "城堡切換",
@@ -416,6 +962,50 @@
                 audioOn: "音效 开启",
                 audioOff: "音效 关闭",
                 clearAll: "清空全部",
+                tabRadar: "实时城堡雷达",
+                tabCustom: "自定义集结同步",
+                rosterLoggedBadge: (n) => `名单: 已登记 ${n} 人`,
+                rosterTitle: "联盟行军时间名单 (实时同步)",
+                rosterSub: "成员或车头可在此登记前往太阳城的行军秒数，方便指挥官直接指派。",
+                clearRoster: "清空名单",
+                rosterNameLbl: "玩家名称 / 代号",
+                rosterSecLbl: "行军时间 (秒)",
+                rosterRoleLbl: "定位标签 (选填)",
+                saveMarchBtn: "保存秒数",
+                timingSetupTitle: "时间基准设置",
+                pathNow: "立即发车",
+                pathTimer: "倒计时",
+                pathTime: "指定时间",
+                countdownBeforeLbl: "发起前倒数秒数",
+                genQueueBtn: "生成并广播队列",
+                clearTriggersBtn: "清除计时",
+                attackSlotsTitle: "进攻队列槽位",
+                addSoloBtn: "+ 添加单撞",
+                addRallyBtn: "+ 添加集结",
+                attackSlotsSub: "从联盟名单指派玩家，或自定义行军秒数与撞击偏差（0 表示同时撞击）。",
+                assignRosterLbl: "从联盟名单指派玩家",
+                assignRosterDefault: "-- 手动输入 / 选择已登记玩家 --",
+                slotTypeLbl: "类型",
+                slotMarchLbl: "行军 (秒)",
+                slotOffsetLbl: "撞击偏差 (秒)",
+                calcImpactLbl: "预计目标撞击基准时间",
+                earliestStartLbl: "最早车头出发时间",
+                awaitingQueue: "等待生成队列",
+                dispatchTriggersTitle: "出发倒计时器 (按时间排序)",
+                liveSyncedBadge: "实时同步中",
+                noActiveQueueTitle: "暂无启用中的同步队列",
+                noActiveQueueSub: "请在左侧指派玩家并点击“生成并广播队列”。",
+                popOutPip: "悬浮小窗",
+                shareCenterTitle: "联盟指令分享中心 (一键复制 UTC)",
+                alwaysUtcBadge: "一律以 UTC 时间复制",
+                shareCompactTitle: "游戏频道精简版",
+                shareCompactSub: "适合游戏内聊天框",
+                shareRallyTitle: "仅集结指令",
+                shareRallySub: "5分钟集结发起时间",
+                shareSolosTitle: "仅单撞指令",
+                shareSolosSub: "单人出发 UTC 时间",
+                shareFullTitle: "完整战术指令",
+                shareFullSub: "详细秒数与偏差明细",
                 liveDispatch: "实时广播",
                 occupantLabel: "城堡占领者:",
                 castleSwapBtn: "城堡切换",
@@ -458,6 +1048,50 @@
                 audioOn: "Zvuk UKLJUČEN",
                 audioOff: "Zvuk ISKLJUČEN",
                 clearAll: "Očisti Sve",
+                tabRadar: "Radar Zamka Uživo",
+                tabCustom: "Prilagođena Sinkronizacija",
+                rosterLoggedBadge: (n) => `Popis: ${n} Prijavljeno`,
+                rosterTitle: "Popis Vremena Marša Saveza (Uživo)",
+                rosterSub: "Igrači ili vođe mogu upisati vrijeme marša (u sekundama) do zamka radi lakšeg rasporeda.",
+                clearRoster: "Očisti Popis",
+                rosterNameLbl: "Ime Igrača / Oznaka",
+                rosterSecLbl: "Vrijeme Marša (Sekunde)",
+                rosterRoleLbl: "Uloga (Opcionalno)",
+                saveMarchBtn: "Spremi Marš",
+                timingSetupTitle: "Postavke Vremena Udara",
+                pathNow: "Kreni ODMAH",
+                pathTimer: "Odbrojavanje",
+                pathTime: "Ciljano Vrijeme",
+                countdownBeforeLbl: "Odbrojavanje Prije Polaska",
+                genQueueBtn: "Generiraj i Pošalji Red",
+                clearTriggersBtn: "Očisti Okidače",
+                attackSlotsTitle: "Mjesta u Redu Napada",
+                addSoloBtn: "+ Dodaj Solo",
+                addRallyBtn: "+ Dodaj Okupljanje",
+                attackSlotsSub: "Dodijelite igrača s popisa ili prilagodite vrijeme marša i odmak (0 udara istovremeno).",
+                assignRosterLbl: "Dodijeli s Popisa Saveza",
+                assignRosterDefault: "-- Ručni Unos / Odaberi Igrača --",
+                slotTypeLbl: "Vrsta",
+                slotMarchLbl: "Marš (Sek)",
+                slotOffsetLbl: "Odmak Udara (s)",
+                calcImpactLbl: "Izračunato Vrijeme Udara",
+                earliestStartLbl: "Najraniji Polazak",
+                awaitingQueue: "ČEKANJE REDA",
+                dispatchTriggersTitle: "Odbrojavanje Polazaka (Kronološki)",
+                liveSyncedBadge: "Sinkronizirano",
+                noActiveQueueTitle: "Nema Aktivnog Reda",
+                noActiveQueueSub: "Dodijelite igrače lijevo i pritisnite \"Generiraj i Pošalji Red\".",
+                popOutPip: "Lebdeći PiP",
+                shareCenterTitle: "Dijeljenje Naredbi (1-Klik UTC)",
+                alwaysUtcBadge: "Uvijek kopira u UTC",
+                shareCompactTitle: "Chat Igre",
+                shareCompactSub: "Kratke UTC linije",
+                shareRallyTitle: "Samo Okupljanja",
+                shareRallySub: "Polasci s 5m pripreme",
+                shareSolosTitle: "Samo Solo",
+                shareSolosSub: "UTC vremena polaska",
+                shareFullTitle: "Sve Naredbe",
+                shareFullSub: "Potpuni pregled",
                 liveDispatch: "UŽIVO",
                 occupantLabel: "Okupator Zamka:",
                 castleSwapBtn: "ZAMJENA ZAMKA",
@@ -500,6 +1134,50 @@
                 audioOn: "Audio ACTIVADO",
                 audioOff: "Audio DESACTIVADO",
                 clearAll: "Borrar Todo",
+                tabRadar: "Radar del Castillo",
+                tabCustom: "Sincronización Propia",
+                rosterLoggedBadge: (n) => `Lista: ${n} Registrados`,
+                rosterTitle: "Lista de Marchas de la Alianza (En Vivo)",
+                rosterSub: "Los jugadores o líderes pueden registrar sus segundos de marcha al Castillo para asignarlos.",
+                clearRoster: "Borrar Lista",
+                rosterNameLbl: "Nombre / Señal",
+                rosterSecLbl: "Marcha (Segundos)",
+                rosterRoleLbl: "Rol (Opc)",
+                saveMarchBtn: "Guardar Marcha",
+                timingSetupTitle: "Configuración de Tiempo",
+                pathNow: "Lanzar AHORA",
+                pathTimer: "Cuenta Atrás",
+                pathTime: "Hora Objetivo",
+                countdownBeforeLbl: "Cuenta Atrás Antes de Salir",
+                genQueueBtn: "Generar y Transmitir Cola",
+                clearTriggersBtn: "Limpiar Tiempos",
+                attackSlotsTitle: "Espacios de Cola de Ataque",
+                addSoloBtn: "+ Añadir Solo",
+                addRallyBtn: "+ Añadir Rally",
+                attackSlotsSub: "Asigna un jugador de la lista o ajusta tiempo de marcha y desfase (0 golpea al mismo tiempo).",
+                assignRosterLbl: "Asignar desde la Lista",
+                assignRosterDefault: "-- Entrada Manual / Elegir Jugador --",
+                slotTypeLbl: "Tipo",
+                slotMarchLbl: "Marcha (s)",
+                slotOffsetLbl: "Desfase (s)",
+                calcImpactLbl: "Impacto Objetivo Calculado",
+                earliestStartLbl: "Primera Salida",
+                awaitingQueue: "ESPERANDO COLA",
+                dispatchTriggersTitle: "Contadores de Salida (Cronológico)",
+                liveSyncedBadge: "Sincronizado",
+                noActiveQueueTitle: "Sin Cola Activa",
+                noActiveQueueSub: "Asigna jugadores a la izquierda y pulsa \"Generar y Transmitir Cola\".",
+                popOutPip: "Ventana PiP",
+                shareCenterTitle: "Centro de Órdenes (1-Toque UTC)",
+                alwaysUtcBadge: "Siempre copia en UTC",
+                shareCompactTitle: "Chat Juego",
+                shareCompactSub: "Líneas UTC compactas",
+                shareRallyTitle: "Solo Rallies",
+                shareRallySub: "Salidas con 5m prep",
+                shareSolosTitle: "Solo Solos",
+                shareSolosSub: "Horas UTC individuales",
+                shareFullTitle: "Órdenes Completas",
+                shareFullSub: "Desglose completo",
                 liveDispatch: "DESPACHO EN VIVO",
                 occupantLabel: "Ocupante del Castillo:",
                 castleSwapBtn: "CAMBIO DE CASTILLO",
@@ -542,6 +1220,50 @@
                 audioOn: "오디오 켜짐",
                 audioOff: "오디오 꺼짐",
                 clearAll: "전체 삭제",
+                tabRadar: "실시간 캐슬 레이더",
+                tabCustom: "맞춤 집결 동기화",
+                rosterLoggedBadge: (n) => `명단: ${n}명 등록됨`,
+                rosterTitle: "연맹 행군 시간 명단 (실시간 동기화)",
+                rosterSub: "집결장이나 연맹원이 캐슬까지의 행군 시간(초)을 등록하면 아래에서 바로 배정할 수 있습니다.",
+                clearRoster: "명단 초기화",
+                rosterNameLbl: "플레이어 이름 / 콜사인",
+                rosterSecLbl: "행군 시간 (초)",
+                rosterRoleLbl: "역할 태그 (선택)",
+                saveMarchBtn: "시간 저장",
+                timingSetupTitle: "타이밍 기준 설정",
+                pathNow: "지금 즉시 발령",
+                pathTimer: "카운트다운",
+                pathTime: "목표 시간 지정",
+                countdownBeforeLbl: "출발 전 대기 카운트다운",
+                genQueueBtn: "동기화 큐 생성 및 브로드캐스트",
+                clearTriggersBtn: "타이머 초기화",
+                attackSlotsTitle: "공격 동기화 슬롯",
+                addSoloBtn: "+ 솔로 추가",
+                addRallyBtn: "+ 집결 추가",
+                attackSlotsSub: "연맹 명단에서 플레이어를 선택하거나 행군 시간과 도착 오프셋(0은 동시 타격)을 설정하세요.",
+                assignRosterLbl: "연맹 명단에서 배정",
+                assignRosterDefault: "-- 직접 입력 / 등록된 플레이어 선택 --",
+                slotTypeLbl: "유형",
+                slotMarchLbl: "행군 (초)",
+                slotOffsetLbl: "도착 오프셋 (초)",
+                calcImpactLbl: "계산된 목표 타격 기준 시간",
+                earliestStartLbl: "최초 선두 출발 시간",
+                awaitingQueue: "큐 생성 대기 중",
+                dispatchTriggersTitle: "출발 트리거 카운트다운 (시간순)",
+                liveSyncedBadge: "실시간 동기화됨",
+                noActiveQueueTitle: "활성화된 동기화 큐가 없습니다",
+                noActiveQueueSub: "왼쪽에서 플레이어를 배정한 후 '동기화 큐 생성 및 브로드캐스트'를 누르세요.",
+                popOutPip: "PiP 팝업",
+                shareCenterTitle: "연맹 오더 공유 센터 (원터치 UTC 복사)",
+                alwaysUtcBadge: "항상 UTC 기준으로 복사됨",
+                shareCompactTitle: "게임 채팅용",
+                shareCompactSub: "간결한 UTC 오더",
+                shareRallyTitle: "집결만 복사",
+                shareRallySub: "5분 집결 출발 시간",
+                shareSolosTitle: "솔로만 복사",
+                shareSolosSub: "개별 솔로 출발 UTC",
+                shareFullTitle: "전체 상세 오더",
+                shareFullSub: "전체 시간 및 오프셋 내역",
                 liveDispatch: "실시간 브로드캐스트",
                 occupantLabel: "캐슬 점령팀:",
                 castleSwapBtn: "캐슬 교체",
@@ -606,7 +1328,7 @@
 
             const setTxt = (id, val) => {
                 const el = document.getElementById(id);
-                if (el) el.innerText = val;
+                if (el && val !== undefined) el.innerText = val;
             };
 
             setTxt('ui-app-title', t.appTitle);
@@ -615,6 +1337,43 @@
             setTxt('ui-kofi-btn', t.kofiBtn);
             setTxt('audio-status', audioEnabled ? t.audioOn : t.audioOff);
             setTxt('ui-clear-all-btn', t.clearAll);
+            setTxt('ui-tab-radar', t.tabRadar);
+            setTxt('ui-tab-custom', t.tabCustom);
+            setTxt('roster-count-badge', t.rosterLoggedBadge(allianceRoster.length));
+            setTxt('ui-roster-title', t.rosterTitle);
+            setTxt('ui-roster-sub', t.rosterSub);
+            setTxt('ui-clear-roster-btn', t.clearRoster);
+            setTxt('ui-roster-name-lbl', t.rosterNameLbl);
+            setTxt('ui-roster-sec-lbl', t.rosterSecLbl);
+            setTxt('ui-roster-role-lbl', t.rosterRoleLbl);
+            setTxt('ui-save-march-btn', t.saveMarchBtn);
+            setTxt('ui-timing-setup-title', t.timingSetupTitle);
+            setTxt('custom-path-now', t.pathNow);
+            setTxt('custom-path-timer', t.pathTimer);
+            setTxt('custom-path-time', t.pathTime);
+            setTxt('ui-countdown-before-lbl', t.countdownBeforeLbl);
+            setTxt('ui-gen-queue-btn', t.genQueueBtn);
+            setTxt('ui-clear-triggers-btn', t.clearTriggersBtn);
+            setTxt('ui-attack-slots-title', t.attackSlotsTitle);
+            setTxt('ui-add-solo-btn', t.addSoloBtn);
+            setTxt('ui-add-rally-btn', t.addRallyBtn);
+            setTxt('ui-attack-slots-sub', t.attackSlotsSub);
+            setTxt('ui-calc-impact-lbl', t.calcImpactLbl);
+            setTxt('ui-earliest-start-lbl', t.earliestStartLbl);
+            if (!customTImpact) setTxt('custom-impact-display', t.awaitingQueue);
+            setTxt('ui-dispatch-triggers-title', t.dispatchTriggersTitle);
+            setTxt('ui-live-synced-badge', t.liveSyncedBadge);
+            setTxt('ui-share-center-title', t.shareCenterTitle);
+            setTxt('ui-always-utc-badge', t.alwaysUtcBadge);
+            setTxt('ui-share-compact-title', t.shareCompactTitle);
+            setTxt('ui-share-compact-sub', t.shareCompactSub);
+            setTxt('ui-share-rally-title', t.shareRallyTitle);
+            setTxt('ui-share-rally-sub', t.shareRallySub);
+            setTxt('ui-share-solos-title', t.shareSolosTitle);
+            setTxt('ui-share-solos-sub', t.shareSolosSub);
+            setTxt('ui-share-full-title', t.shareFullTitle);
+            setTxt('ui-share-full-sub', t.shareFullSub);
+
             setTxt('ui-live-dispatch-tag', t.liveDispatch);
             setTxt('ui-occupant-label', t.occupantLabel);
             setTxt('ui-btn-castle-swap', t.castleSwapBtn);
@@ -629,13 +1388,16 @@
             setTxt('ui-no-rallies-msg', t.noRalliesMsg);
             setTxt('ui-no-rallies-sub', t.noRalliesSub);
 
+            lastCustomCardsSignature = '';
+            renderRosterList();
+            renderCustomSlotInputs();
+            renderCustomCards(Date.now());
             renderTagInputs();
             renderActionCluster();
             renderCommandDeckLockState();
             updateDashboard();
         }
 
-        // Initialize preferred language from local storage
         const savedLangPref = localStorage.getItem('svs_preferred_lang');
         if (savedLangPref) {
             currentLang = savedLangPref;
@@ -643,10 +1405,9 @@
             if (langSel) langSel.value = savedLangPref;
         }
 
-        // Data Models & Neutral Defaults
+        // --- CONSOLIDATED COMMANDER PIN & SESSION STATE ---
         const STORAGE_KEY = 'svs_castle_teams_neutral_v1';
-        const DEFAULT_PASSCODE = 'WOS4336';
-        const COMMAND_DECK_PASSCODE = 'SVS4336';
+        const COMMANDER_PIN = 'WOS4336TD';
 
         const DEFAULT_CONFIG = {
             team1: { codeName: "Team 1", allianceTag: "" },
@@ -655,8 +1416,9 @@
         };
 
         let teamConfig = loadTeamConfig();
-        let isLocked = true;
-        let castleOccupant = 'ENEMY'; // ENEMY, TEAM_1, TEAM_2, TEAM_3
+        let isCommanderUnlocked = sessionStorage.getItem('svs_commander_unlocked') === 'true';
+        let isLabelsEditing = false;
+        let castleOccupant = 'ENEMY';
 
         let audioEnabled = true;
         let threats = [];
@@ -670,10 +1432,10 @@
         let lastPlayedExpelTimestamp = 0;
         let lastHandledSwapTime = 0;
         let lastPlayedSwapTimestamp = 0;
-        let isCommandDeckUnlocked = localStorage.getItem('commandDeckUnlocked') === 'true';
 
         // PiP HUD Live State
         let pipRenderInterval = null;
+        let activePipCustomTriggerId = null;
         let activePipAlert = {
             active: false,
             action: '',
@@ -684,24 +1446,99 @@
             textColor: '#fcd34d'
         };
 
-        function toggleAudio() {
-            audioEnabled = !audioEnabled;
-            const icon = document.getElementById('audio-icon');
-            const status = document.getElementById('audio-status');
-            const btn = document.getElementById('audio-btn');
-            const t = getActiveTranslation();
-            
-            if (icon && status) {
-                if (audioEnabled) {
-                    icon.className = 'fa-solid fa-volume-high text-emerald-400';
-                    status.innerText = t.audioOn;
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 whitespace-nowrap';
-                    playBeep(880, 0.1);
-                } else {
-                    icon.className = 'fa-solid fa-volume-xmark text-red-400';
-                    status.innerText = t.audioOff;
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/30 hover:bg-red-900/40 text-red-300 border border-red-800/40 transition flex items-center gap-2 whitespace-nowrap';
-                }
+        // --- TAB 2 STATE: ALLIANCE MARCH ROSTER & CUSTOM SYNC QUEUE ---
+        function getDefaultCustomSlots() {
+            return [
+                { id: 'c1', type: 'rally', rosterId: '', title: 'Rally 1', prepSec: 300, marchSec: 10, offsetSec: 0 },
+                { id: 'c2', type: 'rally', rosterId: '', title: 'Rally 2', prepSec: 300, marchSec: 10, offsetSec: 0 }
+            ];
+        }
+
+        let activeMainTab = 'radar';
+        let allianceRoster = [];
+        // Default to 2 Rallies with 0 offset
+        let customSlots = getDefaultCustomSlots();
+        let customPath = 'timer'; // Defaults to Countdown
+        let customTimerSec = 5;   // Defaults to 00:05
+        let customUseUTC = true;
+        let customTImpact = null;
+        let customTRallyStart = null;
+        let customTriggers = {};
+        let lastCustomCardsSignature = "";
+        let lastCustomBeeped = {};
+        let customTickInterval = null;
+
+        function showAppToast(msg, isError = false) {
+            const toast = document.getElementById('app-toast');
+            const textEl = document.getElementById('app-toast-text');
+            if (!toast || !textEl) return;
+            textEl.innerText = msg;
+            toast.className = isError
+                ? 'fixed bottom-5 right-5 z-50 bg-red-500 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-red-300 transition-all'
+                : 'fixed bottom-5 right-5 z-50 bg-emerald-500 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-emerald-300 transition-all';
+            toast.classList.remove('hidden');
+            if (window.appToastTimer) clearTimeout(window.appToastTimer);
+            window.appToastTimer = setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function updateCommanderSessionUI() {
+            const btn = document.getElementById('commander-status-btn');
+            const icon = document.getElementById('commander-status-icon');
+            const txt = document.getElementById('commander-status-text');
+            if (!btn || !icon || !txt) return;
+
+            if (isCommanderUnlocked) {
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-950/50 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
+                icon.className = 'fa-solid fa-lock-open text-xs text-emerald-400';
+                txt.innerText = 'Commander Unlocked';
+            } else {
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
+                icon.className = 'fa-solid fa-lock text-xs text-amber-400';
+                txt.innerText = 'Commander Locked';
+            }
+            renderCommandDeckLockState();
+        }
+
+        function setCommanderSessionUnlocked(unlocked) {
+            isCommanderUnlocked = unlocked;
+            sessionStorage.setItem('svs_commander_unlocked', unlocked ? 'true' : 'false');
+            if (!unlocked) {
+                isLabelsEditing = false;
+                renderTagInputs();
+            }
+            updateCommanderSessionUI();
+        }
+
+        function toggleCommanderSession() {
+            if (isCommanderUnlocked) {
+                setCommanderSessionUnlocked(false);
+                showAppToast("Commander session locked");
+            } else {
+                requireCommanderPin("unlock Commander privileges", () => {
+                    showAppToast("Commander session unlocked across both tabs!");
+                });
+            }
+        }
+
+        function switchMainTab(tab) {
+            activeMainTab = tab;
+            const radarView = document.getElementById('view-radar');
+            const customView = document.getElementById('view-custom-sync');
+            const radarBtn = document.getElementById('tab-btn-radar');
+            const customBtn = document.getElementById('tab-btn-custom');
+
+            if (tab === 'radar') {
+                radarView?.classList.remove('hidden');
+                customView?.classList.add('hidden');
+                if (radarBtn) radarBtn.className = 'px-4 py-2 rounded-xl font-display font-bold text-xs uppercase tracking-wider bg-amber-500 text-slate-950 shadow transition flex items-center justify-center gap-2';
+                if (customBtn) customBtn.className = 'px-4 py-2 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-slate-400 hover:text-white hover:bg-slate-800/70 transition flex items-center justify-center gap-2';
+            } else {
+                radarView?.classList.add('hidden');
+                customView?.classList.remove('hidden');
+                if (radarBtn) radarBtn.className = 'px-4 py-2 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-slate-400 hover:text-white hover:bg-slate-800/70 transition flex items-center justify-center gap-2';
+                if (customBtn) customBtn.className = 'px-4 py-2 rounded-xl font-display font-bold text-xs uppercase tracking-wider bg-sky-500 text-slate-950 shadow transition flex items-center justify-center gap-2';
+                renderCustomSlotInputs();
+                calculateCustomSync();
             }
         }
 
@@ -717,8 +1554,6 @@
 
         // Web Audio Context Singleton
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        // --- BACKGROUND KEEP-ALIVE AUDIO ENGINE (Prevents Mobile Tab Sleep) ---
         let silentAudioLoopNode = null;
 
         function startBackgroundAudioKeeper() {
@@ -736,15 +1571,12 @@
                 gain.connect(audioCtx.destination);
                 source.start(0);
                 silentAudioLoopNode = source;
-            } catch (e) {
-                console.warn("Background audio keeper failed to initialize:", e);
-            }
+            } catch (e) {}
         }
 
-        // Request Browser System Notification Permission
         function requestNotificationPermission() {
             if (!('Notification' in window)) {
-                alert("This browser does not support desktop/mobile system notifications.");
+                showAppToast("This browser does not support system notifications.", true);
                 return;
             }
 
@@ -756,11 +1588,12 @@
                     notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                     notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
                 }
+                showAppToast("System Alerts Active!");
                 return;
             }
 
             if (Notification.permission === 'denied') {
-                alert("Notification permissions are currently BLOCKED in your browser site settings. Please tap the lock/tune icon in your browser URL bar and allow Notifications for this site.");
+                showAppToast("Notifications are blocked in browser settings.", true);
                 if (notifyBtn) {
                     notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
                     notifyBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-xs"></i><span id="ui-notify-status">Alerts Blocked</span>';
@@ -775,33 +1608,22 @@
                         notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
                     }
                     sendSystemNotification("System Alerts Enabled", "Live dispatch notifications are now active!");
-                } else if (permission === 'denied') {
-                    if (notifyBtn) {
-                        notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
-                        notifyBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-xs"></i><span id="ui-notify-status">Alerts Blocked</span>';
-                    }
                 }
-            }).catch(err => {
-                console.error("Notification permission error:", err);
-            });
+            }).catch(() => {});
         }
 
-        // Send System Banner Notification
         function sendSystemNotification(title, body) {
             if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
                 try {
                     new Notification(title, {
                         body: body,
                         icon: 'https://www.asktechdad.com/favicon.ico',
-                        tag: 'svs-dispatch-alert',
+                        tag: `svs-dispatch-${activeFirestoreRoomId}`,
                         renotify: true
                     });
                 } catch (e) {}
             }
         }
-
-        // BroadcastChannel Fallback for Local Multi-Tab Sync
-        const syncChannel = new BroadcastChannel('svs_rally_sync');
 
         // --- SILENT ANONYMOUS AUTHENTICATION & FIRESTORE BINDINGS ---
         onAuthStateChanged(auth, async (user) => {
@@ -809,7 +1631,6 @@
                 try {
                     await signInAnonymously(auth);
                 } catch (err) {
-                    console.warn("Firebase Auth unavailable or configuration missing. Running in local fallback mode:", err);
                     initLocalFallbackMode();
                 }
             } else {
@@ -826,17 +1647,25 @@
         }
 
         function subscribeToLiveSession() {
+            if (unsubSession) { unsubSession(); unsubSession = null; }
+            if (unsubThreats) { unsubThreats(); unsubThreats = null; }
+            if (unsubRoster) { unsubRoster(); unsubRoster = null; }
+
+            const currentRoomIdSnapshot = activeFirestoreRoomId;
+
             try {
-                // 1. Session Document Listener
-                onSnapshot(sessionDocRef, (snapshot) => {
+                // 1. Room Session Document Listener
+                unsubSession = onSnapshot(sessionDocRef, (snapshot) => {
+                    if (currentRoomIdSnapshot !== activeFirestoreRoomId) return;
+
                     if (!snapshot.exists()) {
                         setDoc(sessionDocRef, {
+                            roomSlug: activeRoomSlug || "MAIN",
                             castleOccupant: 'ENEMY',
                             teamConfig: teamConfig,
-                            isLocked: true,
                             expelAlert: { active: false, timestamp: 0 },
                             instantCallout: { teamKey: '', timestamp: 0 }
-                        }).catch(err => console.warn("Firestore write fallback mode:", err));
+                        }).catch(() => {});
                         return;
                     }
 
@@ -855,12 +1684,7 @@
                         renderActionCluster();
                     }
 
-                    if (typeof data.isLocked === 'boolean') {
-                        isLocked = data.isLocked;
-                        renderTagInputs();
-                    }
-
-                    // Evaluate Instant Callout Event
+                    // Room-scoped Instant Callout
                     if (data.instantCallout && data.instantCallout.timestamp) {
                         const eventTime = data.instantCallout.timestamp;
                         const isSelfTrigger = (eventTime === lastPlayedCalloutTimestamp);
@@ -873,14 +1697,13 @@
                             const action = data.instantCallout.action || "CALL";
 
                             triggerVisualFlashOverlay(teamKey, action);
-
                             if (!isSelfTrigger) {
                                 playTeamAudioProfile(teamKey, action);
                             }
                         }
                     }
 
-                    // Evaluate Expel Alert Event
+                    // Room-scoped Expel Alert
                     if (data.expelAlert && data.expelAlert.timestamp) {
                         const eventTime = data.expelAlert.timestamp;
                         const isNewEvent = (eventTime > lastHandledExpelTime);
@@ -892,7 +1715,7 @@
                         }
                     }
 
-                    // Evaluate Castle Swap Alert Event
+                    // Room-scoped Castle Swap Alert
                     if (data.swapAlert && data.swapAlert.timestamp) {
                         const eventTime = data.swapAlert.timestamp;
                         const isSelfTrigger = (eventTime === lastPlayedSwapTimestamp);
@@ -908,14 +1731,35 @@
                         }
                     }
 
-                    updateDashboard();
-                }, (err) => {
-                    console.warn("Firestore Session Snapshot fallback mode:", err);
-                    initLocalFallbackMode();
-                });
+                    // Room-scoped Custom Queue State
+                    if (data.customSyncState) {
+                        const cs = data.customSyncState;
+                        if (Array.isArray(cs.slots) && cs.slots.length > 0) {
+                            const isLegacyDefault = cs.slots.length === 3 &&
+                                cs.slots[0]?.title === 'Softener Solo 1' &&
+                                cs.slots[1]?.title === 'Softener Solo 2';
+                            if (isLegacyDefault) {
+                                customSlots = getDefaultCustomSlots();
+                                persistCustomSyncState();
+                            } else {
+                                customSlots = cs.slots;
+                            }
+                        } else {
+                            customSlots = getDefaultCustomSlots();
+                        }
+                        customTImpact = cs.tImpact || null;
+                        customTRallyStart = cs.tRallyStart || null;
+                        renderCustomSlotInputs();
+                        calculateCustomSync();
+                    }
 
-                // 2. Threat Collection Listener
-                onSnapshot(threatsCollRef, (snapshot) => {
+                    updateDashboard();
+                }, () => initLocalFallbackMode());
+
+                // 2. Room-scoped Threats Collection Listener
+                unsubThreats = onSnapshot(threatsCollRef, (snapshot) => {
+                    if (currentRoomIdSnapshot !== activeFirestoreRoomId) return;
+
                     const liveThreats = [];
                     snapshot.forEach(docSnap => {
                         liveThreats.push(docSnap.data());
@@ -929,12 +1773,35 @@
                     }
 
                     updateDashboard();
-                }, (err) => {
-                    console.warn("Firestore Threats Snapshot fallback mode:", err);
-                    initLocalFallbackMode();
+                }, () => initLocalFallbackMode());
+
+                // 3. Room-scoped Alliance March Roster Listener
+                unsubRoster = onSnapshot(rosterCollRef, (snapshot) => {
+                    if (currentRoomIdSnapshot !== activeFirestoreRoomId) return;
+
+                    const list = [];
+                    snapshot.forEach(docSnap => {
+                        list.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    list.sort((a, b) => (a.playerName || '').localeCompare(b.playerName || ''));
+                    allianceRoster = list;
+
+                    let slotUpdated = false;
+                    customSlots.forEach(s => {
+                        if (s.rosterId) {
+                            const matched = allianceRoster.find(r => r.id === s.rosterId);
+                            if (matched && Number(s.marchSec) !== Number(matched.marchSec)) {
+                                s.marchSec = Number(matched.marchSec) || s.marchSec;
+                                slotUpdated = true;
+                            }
+                        }
+                    });
+
+                    renderRosterList();
+                    renderCustomSlotInputs();
+                    if (slotUpdated) calculateCustomSync();
                 });
             } catch (err) {
-                console.warn("Firestore subscription error:", err);
                 initLocalFallbackMode();
             }
         }
@@ -960,7 +1827,6 @@
                     instantCallout: { teamKey, action, timestamp: calloutTime }
                 }).catch(() => {});
             }
-            syncChannel.postMessage({ type: 'INSTANT_CALLOUT', teamKey, action, timestamp: calloutTime });
         }
 
         function triggerGlobalTickerAlert(teamKey, action = "CALL") {
@@ -972,14 +1838,15 @@
             ticker.classList.remove('hidden', 'flash-trigger');
             void ticker.offsetWidth;
 
-            let notifyTitle = "SvS Telemetry Dispatch";
+            const roomPrefix = activeRoomSlug ? `[${activeRoomSlug}] ` : "";
+            let notifyTitle = `${roomPrefix}SvS Dispatch`;
             let notifyBody = "";
 
             if (action === 'SWAP') {
                 textEl.innerText = `🔄 BROADCAST: CASTLE SWAP IN PROGRESS!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-yellow-950/95 border-2 border-yellow-400 text-yellow-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-rotate text-base text-yellow-400 animate-spin";
-                notifyTitle = "🔄 CASTLE SWAP";
+                notifyTitle = `${roomPrefix}🔄 CASTLE SWAP`;
                 notifyBody = "Castle Swap In Progress!";
                 activePipAlert = {
                     active: true,
@@ -994,7 +1861,7 @@
                 textEl.innerText = `⚠️ EMERGENCY: EXPEL ALL TROOPS FROM CASTLE NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-amber-950/95 border-2 border-amber-500 text-amber-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-triangle-exclamation text-base text-amber-400 animate-pulse";
-                notifyTitle = "⚠️ EXPEL ALL TROOPS";
+                notifyTitle = `${roomPrefix}⚠️ EXPEL ALL TROOPS`;
                 notifyBody = "Evacuate all troops from Castle immediately!";
                 activePipAlert = {
                     active: true,
@@ -1010,7 +1877,7 @@
                 textEl.innerText = `🚫 CANCEL: ${label}! ABORT MARCH!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-red-950/95 border-2 border-red-500 text-red-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-ban text-base text-red-400 animate-pulse";
-                notifyTitle = `🚫 CANCEL ${label}`;
+                notifyTitle = `${roomPrefix}🚫 CANCEL ${label}`;
                 notifyBody = `Abort rally march immediately!`;
                 activePipAlert = {
                     active: true,
@@ -1026,7 +1893,7 @@
                 textEl.innerText = `⚡ DISPATCH: ${label} - OPEN RALLY NOW!`;
                 ticker.className = "mb-3 px-4 py-2.5 rounded-xl bg-emerald-950/95 border-2 border-emerald-400 text-emerald-100 font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-2xl flex items-center justify-between flash-trigger";
                 iconEl.className = "fa-solid fa-bullhorn text-base text-emerald-400 animate-pulse";
-                notifyTitle = `⚡ OPEN RALLY: ${label}`;
+                notifyTitle = `${roomPrefix}⚡ OPEN RALLY: ${label}`;
                 notifyBody = `${label}, Open Rally Now!`;
                 activePipAlert = {
                     active: true,
@@ -1065,18 +1932,34 @@
             }
         }
 
+        function triggerHeaderAlertPulse() {
+            const header = document.getElementById('radar-header-alert');
+            if (!header) return;
+            header.classList.remove('pulse-active');
+            void header.offsetWidth;
+            header.classList.add('pulse-active');
+            setTimeout(() => header.classList.remove('pulse-active'), 2400);
+        }
+
         // --- FLOATING PICTURE-IN-PICTURE (PiP) TACTICAL HUD ENGINE ---
+        function getNextActiveCustomTrigger(now) {
+            const list = Object.values(customTriggers).sort((a, b) => a.triggerMs - b.triggerMs);
+            if (list.length === 0) return null;
+            return list.find(t => (t.triggerMs - now) > -4000) || list[list.length - 1];
+        }
+
         function renderPiPCanvas() {
             const canvas = document.getElementById('pip-canvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const w = canvas.width;
             const h = canvas.height;
+            const now = Date.now();
 
             ctx.fillStyle = activePipAlert.active ? activePipAlert.bgColor : '#090d16';
             ctx.fillRect(0, 0, w, h);
 
-            const pulseOn = Math.floor(Date.now() / 250) % 2 === 0;
+            const pulseOn = Math.floor(now / 250) % 2 === 0;
             ctx.lineWidth = activePipAlert.active ? (pulseOn ? 10 : 5) : 4;
             ctx.strokeStyle = activePipAlert.active ? activePipAlert.borderColor : '#1e293b';
             ctx.strokeRect(4, 4, w - 8, h - 8);
@@ -1087,13 +1970,17 @@
             ctx.font = '800 18px "Chakra Petch", sans-serif';
             ctx.fillStyle = '#fbbf24';
             ctx.textAlign = 'left';
-            ctx.fillText('SVS CASTLE TELEMETRY HUD', 24, 39);
+            ctx.fillText(activeRoomSlug ? `HUD • ${activeRoomSlug}` : 'SVS TACTICAL HUD', 24, 39);
 
             const occLabel = castleOccupant === 'ENEMY' ? 'OCCUPANT: ENEMY' : `OCCUPANT: ${getTeamLabel(castleOccupant).toUpperCase()}`;
             ctx.font = '700 15px "Inter", sans-serif';
             ctx.textAlign = 'right';
             ctx.fillStyle = castleOccupant === 'ENEMY' ? '#f87171' : '#34d399';
             ctx.fillText(occLabel, w - 24, 38);
+
+            const targetCustomTrig = (activePipCustomTriggerId && customTriggers[activePipCustomTriggerId])
+                ? customTriggers[activePipCustomTriggerId]
+                : getNextActiveCustomTrigger(now);
 
             if (activePipAlert.active) {
                 ctx.textAlign = 'center';
@@ -1104,8 +1991,57 @@
                 ctx.font = '700 18px "Inter", sans-serif';
                 ctx.fillStyle = '#ffffff';
                 ctx.fillText(activePipAlert.subtext, w / 2, 178);
+            } else if (targetCustomTrig) {
+                const diff = targetCustomTrig.triggerMs - now;
+                let statusLine = activePipCustomTriggerId ? 'PINNED PLAYER TRIGGER' : 'NEXT SYNC TRIGGER';
+                let timerDisplay = '00:00.0';
+                let mainColor = '#38bdf8';
+
+                if (diff > 0) {
+                    const totalSec = diff / 1000;
+                    const mins = Math.floor(totalSec / 60);
+                    const secs = (totalSec % 60).toFixed(1);
+                    timerDisplay = `${String(mins).padStart(2, '0')}:${String(secs).padStart(4, '0')}`;
+                    if (diff <= 3000) {
+                        statusLine = `LAUNCH IN ${(diff / 1000).toFixed(1)}s!`;
+                        mainColor = '#fb923c';
+                    } else if (diff <= 15000) {
+                        statusLine = 'PREP IN-GAME: HOVER DEPLOY';
+                        mainColor = '#fbbf24';
+                    }
+                } else if (diff > -4000) {
+                    timerDisplay = 'GO!';
+                    statusLine = '⚡ LAUNCH MARCH NOW! ⚡';
+                    mainColor = '#34d399';
+                } else {
+                    timerDisplay = '00:00.0';
+                    statusLine = 'MARCH IN FLIGHT';
+                    mainColor = '#94a3b8';
+                }
+
+                ctx.textAlign = 'center';
+                ctx.font = '800 22px "Chakra Petch", sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(targetCustomTrig.title.toUpperCase().slice(0, 30), w / 2, 88);
+
+                ctx.font = '800 62px monospace';
+                ctx.fillStyle = mainColor;
+                ctx.fillText(timerDisplay, w / 2, 152);
+
+                ctx.font = '700 16px "Inter", sans-serif';
+                ctx.fillStyle = mainColor;
+                ctx.fillText(statusLine, w / 2, 186);
+
+                if (threats.length > 0) {
+                    const t0 = threats[0];
+                    const travelTarget = t0.timer.travelTargetTime || now;
+                    const secLeft = Math.max(0, Math.floor((travelTarget - now) / 1000));
+                    const rLabel = t0.rallyType === 'ENEMY' ? 'ENEMY RALLY' : getTeamLabel(t0.rallyType).toUpperCase();
+                    ctx.font = '700 13px monospace';
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fillText(`RADAR #1: ${rLabel} (${formatTime(secLeft)})`, w / 2, 218);
+                }
             } else if (threats.length > 0) {
-                const now = Date.now();
                 const visibleThreats = threats.slice(0, 2);
                 visibleThreats.forEach((t, idx) => {
                     const yPos = 98 + (idx * 64);
@@ -1134,17 +2070,16 @@
                 });
             } else {
                 ctx.textAlign = 'center';
-                ctx.font = '700 22px "Chakra Petch", sans-serif';
+                ctx.font = '700 21px "Chakra Petch", sans-serif';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('LIVE AUDIO & DISPATCH MONITOR ACTIVE', w / 2, 128);
+                ctx.fillText('LIVE RADAR & SYNC MONITOR ACTIVE', w / 2, 126);
 
                 ctx.font = '500 15px "Inter", sans-serif';
                 ctx.fillStyle = '#64748b';
-                ctx.fillText('Keep this floating window open over Whiteout Survival', w / 2, 162);
+                ctx.fillText('Awaiting shot caller orders from either tab...', w / 2, 162);
             }
         }
 
-        // Attach Canvas Stream without invoking video.play() on global touches
         function initPiPCanvasStream() {
             const video = document.getElementById('pip-video');
             const canvas = document.getElementById('pip-canvas');
@@ -1168,7 +2103,7 @@
 
             if (active) {
                 if (pipRenderInterval) clearInterval(pipRenderInterval);
-                pipRenderInterval = setInterval(renderPiPCanvas, 250);
+                pipRenderInterval = setInterval(renderPiPCanvas, 100);
                 pipBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-950/60 text-sky-300 border border-sky-400 transition flex items-center gap-1.5 whitespace-nowrap';
                 pipStatus.innerText = 'PiP Active';
             } else {
@@ -1186,18 +2121,16 @@
                     video.webkitSetPresentationMode('picture-in-picture');
                     setPiPButtonState(true);
                 } catch (err) {
-                    console.warn("WebKit PiP error:", err);
-                    alert("Unable to launch Picture-in-Picture here. If you are viewing inside an embedded preview frame, open the live GitHub Pages URL directly in Safari/Chrome.");
+                    showAppToast("Open the live GitHub Pages URL directly in Safari/Chrome to launch PiP.", true);
                 }
             } else if (typeof video.requestPictureInPicture === 'function') {
                 video.requestPictureInPicture()
                     .then(() => setPiPButtonState(true))
-                    .catch((err) => {
-                        console.warn("Standard PiP error:", err);
-                        alert("Unable to launch Picture-in-Picture here. If you are viewing inside an embedded preview frame, open the live GitHub Pages URL directly in Safari/Chrome.");
+                    .catch(() => {
+                        showAppToast("Open the live GitHub Pages URL directly in Safari/Chrome to launch PiP.", true);
                     });
             } else {
-                alert("Picture-in-Picture is not supported in this browser environment.");
+                showAppToast("Picture-in-Picture is not supported in this browser.", true);
             }
         }
 
@@ -1209,7 +2142,6 @@
             initPiPCanvasStream();
             renderPiPCanvas();
 
-            // Unlock audio threads on explicit PiP button click
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume().catch(() => {});
             }
@@ -1220,7 +2152,6 @@
                 window.speechSynthesis.speak(silentPing);
             }
 
-            // Exit PiP if already active
             if (document.pictureInPictureElement) {
                 document.exitPictureInPicture().catch(() => {});
                 return;
@@ -1230,7 +2161,6 @@
                 return;
             }
 
-            // Start video stream strictly inside this button gesture before requesting PiP
             if (video.paused || video.readyState < 2) {
                 const playPromise = video.play();
                 if (playPromise && typeof playPromise.then === 'function') {
@@ -1245,41 +2175,56 @@
             }
         }
 
-        // Bind PiP Exit Listeners Once (Standard + iOS Safari WebKit)
         const pipVideoEl = document.getElementById('pip-video');
         if (pipVideoEl) {
-            pipVideoEl.addEventListener('leavepictureinpicture', () => setPiPButtonState(false));
+            pipVideoEl.addEventListener('leavepictureinpicture', () => {
+                activePipCustomTriggerId = null;
+                setPiPButtonState(false);
+            });
             pipVideoEl.addEventListener('webkitpresentationmodechanged', () => {
                 if (pipVideoEl.webkitPresentationMode === 'picture-in-picture') {
                     setPiPButtonState(true);
                 } else {
+                    activePipCustomTriggerId = null;
                     setPiPButtonState(false);
                 }
             });
         }
 
-        function triggerHeaderAlertPulse() {
-            const header = document.getElementById('radar-header-alert');
-            if (header) {
-                header.classList.add('border-amber-400', 'bg-amber-500/10');
-                setTimeout(() => {
-                    header.classList.remove('border-amber-400', 'bg-amber-500/10');
-                }, 1000);
+        function launchCustomPipTimer(slotId) {
+            activePipCustomTriggerId = slotId;
+            const video = document.getElementById('pip-video');
+            if (!video) return;
+
+            initPiPCanvasStream();
+            renderPiPCanvas();
+
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+            startBackgroundAudioKeeper();
+
+            if (pipRenderInterval) clearInterval(pipRenderInterval);
+            pipRenderInterval = setInterval(renderPiPCanvas, 100);
+
+            if (video.paused || video.readyState < 2) {
+                const p = video.play();
+                if (p && typeof p.then === 'function') {
+                    p.then(() => enterPiPMode(video)).catch(() => enterPiPMode(video));
+                } else {
+                    enterPiPMode(video);
+                }
+            } else {
+                enterPiPMode(video);
             }
         }
 
         function toggleCommandDeckLock() {
-            if (isCommandDeckUnlocked) {
-                isCommandDeckUnlocked = false;
-                localStorage.setItem('commandDeckUnlocked', 'false');
+            if (isCommanderUnlocked) {
+                setCommanderSessionUnlocked(false);
+                showAppToast("Command Deck & Commander session locked");
             } else {
-                const rawInput = prompt("Enter Passcode to Unlock Instant Command Deck:");
-                const sanitizedInput = (rawInput || "").trim().toUpperCase();
-
-                if (sanitizedInput === COMMAND_DECK_PASSCODE) {
-                    isCommandDeckUnlocked = true;
-                    localStorage.setItem('commandDeckUnlocked', 'true');
-                    
+                requireCommanderPin("unlock Instant Command Deck", () => {
                     if (audioCtx && audioCtx.state === 'suspended') {
                         audioCtx.resume().catch(() => {});
                     }
@@ -1288,12 +2233,9 @@
                         silentPing.volume = 0;
                         window.speechSynthesis.speak(silentPing);
                     }
-                } else if (rawInput !== null) {
-                    alert("Incorrect Command Deck Passcode!");
-                    return;
-                }
+                    showAppToast("Command Deck Unlocked");
+                });
             }
-            renderCommandDeckLockState();
         }
 
         function renderCommandDeckLockState() {
@@ -1305,7 +2247,7 @@
 
             if (!drawer || !icon || !label || !btn) return;
 
-            if (isCommandDeckUnlocked) {
+            if (isCommanderUnlocked) {
                 drawer.classList.remove('hidden');
                 setTimeout(() => {
                     drawer.classList.remove('max-h-0', 'opacity-0');
@@ -1340,7 +2282,7 @@
             speakCallout(teamNum, action);
         }
 
-        // Occupant Selector
+        // Occupant Selector (Open to Watchers)
         function setCastleOccupant(occupant) {
             castleOccupant = occupant;
             renderOccupantButtons();
@@ -1349,7 +2291,6 @@
             if (currentUser) {
                 updateDoc(sessionDocRef, { castleOccupant: occupant }).catch(() => {});
             }
-            syncChannel.postMessage({ type: 'SET_OCCUPANT', occupant });
             updateDashboard();
         }
 
@@ -1389,7 +2330,6 @@
             const t = getActiveTranslation();
 
             let html = `
-                <!-- ALWAYS RENDER ENEMY RALLY -->
                 <button onclick="window.spawnSingleRally('ENEMY')" class="py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-display font-extrabold text-xs uppercase tracking-wider border border-red-400 shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-skull text-base"></i>
                     <span>${t.logEnemyRally}</span>
@@ -1414,39 +2354,43 @@
             clusterContainer.innerHTML = html;
         }
 
+        // Commander-Gated Expel All
         function triggerExpelAllAlert() {
-            const alertTime = Date.now();
-            lastPlayedExpelTimestamp = alertTime;
-            lastHandledExpelTime = alertTime;
+            requireCommanderPin("broadcast NOTIFY: EXPEL ALL", () => {
+                const alertTime = Date.now();
+                lastPlayedExpelTimestamp = alertTime;
+                lastHandledExpelTime = alertTime;
 
-            renderExpelOverlay(true);
+                renderExpelOverlay(true);
 
-            if (currentUser) {
-                updateDoc(sessionDocRef, { 
-                    expelAlert: { active: true, timestamp: alertTime } 
-                }).catch(() => {});
-            }
-            syncChannel.postMessage({ type: 'EXPEL_ALERT', timestamp: alertTime });
+                if (currentUser) {
+                    updateDoc(sessionDocRef, { 
+                        expelAlert: { active: true, timestamp: alertTime } 
+                    }).catch(() => {});
+                }
+            });
         }
 
-        async function triggerCastleSwapAlert() {
-            if (audioCtx && audioCtx.state === 'suspended') {
-                try { await audioCtx.resume(); } catch (e) {}
-            }
+        // Commander-Gated Castle Swap
+        function triggerCastleSwapAlert() {
+            requireCommanderPin("broadcast CASTLE SWAP", async () => {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    try { await audioCtx.resume(); } catch (e) {}
+                }
 
-            const alertTime = Date.now();
-            lastPlayedSwapTimestamp = alertTime;
-            lastHandledSwapTime = alertTime;
+                const alertTime = Date.now();
+                lastPlayedSwapTimestamp = alertTime;
+                lastHandledSwapTime = alertTime;
 
-            triggerGlobalTickerAlert(null, 'SWAP');
-            playSwapAudioProfile();
+                triggerGlobalTickerAlert(null, 'SWAP');
+                playSwapAudioProfile();
 
-            if (currentUser) {
-                updateDoc(sessionDocRef, {
-                    swapAlert: { active: true, timestamp: alertTime }
-                }).catch(() => {});
-            }
-            syncChannel.postMessage({ type: 'SWAP_ALERT', timestamp: alertTime });
+                if (currentUser) {
+                    updateDoc(sessionDocRef, {
+                        swapAlert: { active: true, timestamp: alertTime }
+                    }).catch(() => {});
+                }
+            });
         }
 
         function playSwapAudioProfile() {
@@ -1479,7 +2423,6 @@
 
         function speakCallout(teamNum, action = "CALL") {
             if (!audioEnabled || !('speechSynthesis' in window)) return;
-            
             window.speechSynthesis.cancel();
 
             const teamKey = `team${teamNum}`;
@@ -1489,24 +2432,18 @@
 
             let phrase = "";
             if (action === "CANCEL") {
-                phrase = tag 
-                    ? `Cancel ${codeName} ${tag}!`
-                    : `Cancel ${codeName}!`;
+                phrase = tag ? `Cancel ${codeName} ${tag}!` : `Cancel ${codeName}!`;
             } else {
-                phrase = tag 
-                    ? `${codeName} ${tag}, Open Rally Now!`
-                    : `${codeName}, Open Rally Now!`;
+                phrase = tag ? `${codeName} ${tag}, Open Rally Now!` : `${codeName}, Open Rally Now!`;
             }
 
             const msg = new SpeechSynthesisUtterance(phrase);
             msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang;
             msg.rate = 1.25;
             msg.pitch = 1.0;
-            
             window.speechSynthesis.speak(msg);
         }
 
-        // Standalone Rally Spawner with Absolute Epoch Target Timestamps
         async function spawnSingleRally(rallyType) {
             requestWakeLock();
             const now = Date.now();
@@ -1514,7 +2451,6 @@
 
             const prepDuration = 300;
             const travelDuration = 30;
-
             const prepTargetTime = now + (prepDuration * 1000);
             const travelTargetTime = prepTargetTime + (travelDuration * 1000);
 
@@ -1539,9 +2475,7 @@
             if (currentUser) {
                 try {
                     await setDoc(doc(threatsCollRef, threatId), newThreat);
-                } catch (e) {
-                    console.error("Firestore Threat Add Error:", e);
-                }
+                } catch (e) {}
             } else {
                 threats.push(newThreat);
                 updateDashboard();
@@ -1595,28 +2529,88 @@
             if (currentUser) {
                 updateDoc(sessionDocRef, { teamConfig: teamConfig }).catch(() => {});
             }
-            syncChannel.postMessage({ type: 'UPDATE_CONFIG', teamConfig });
+        }
+
+        // --- PASSCODE & CONFIRMATION MODAL HANDLERS ---
+        let pendingPasscodeCallback = null;
+        let pendingConfirmCallback = null;
+
+        function openPasscodeModal(actionDescription, onSuccess) {
+            const modal = document.getElementById('passcode-modal');
+            const descEl = document.getElementById('passcode-modal-desc');
+            const inputEl = document.getElementById('passcode-modal-input');
+            if (!modal || !descEl || !inputEl) return;
+
+            pendingPasscodeCallback = onSuccess;
+            descEl.innerText = `Enter Commander PIN to ${actionDescription}:`;
+            inputEl.value = '';
+            modal.classList.remove('hidden');
+            setTimeout(() => inputEl.focus(), 30);
+        }
+
+        function closePasscodeModal() {
+            document.getElementById('passcode-modal')?.classList.add('hidden');
+            pendingPasscodeCallback = null;
+        }
+
+        function submitPasscodeModal() {
+            const inputEl = document.getElementById('passcode-modal-input');
+            if (!inputEl) return;
+            const sanitized = (inputEl.value || '').trim().toUpperCase();
+            if (sanitized === COMMANDER_PIN) {
+                const cb = pendingPasscodeCallback;
+                closePasscodeModal();
+                setCommanderSessionUnlocked(true);
+                if (typeof cb === 'function') cb();
+            } else {
+                showAppToast("Incorrect Commander PIN!", true);
+                inputEl.value = '';
+                inputEl.focus();
+            }
+        }
+
+        function requireCommanderPin(actionDescription, onSuccess) {
+            if (isCommanderUnlocked) {
+                onSuccess();
+                return;
+            }
+            openPasscodeModal(actionDescription, onSuccess);
+        }
+
+        function openConfirmModal(title, description, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const descEl = document.getElementById('confirm-modal-desc');
+            if (!modal || !titleEl || !descEl) return;
+
+            titleEl.innerText = title;
+            descEl.innerText = description;
+            pendingConfirmCallback = onConfirm;
+            modal.classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal')?.classList.add('hidden');
+            pendingConfirmCallback = null;
+        }
+
+        function submitConfirmModal() {
+            const cb = pendingConfirmCallback;
+            closeConfirmModal();
+            if (typeof cb === 'function') cb();
         }
 
         function toggleLock() {
-            if (isLocked) {
-                const rawInput = prompt("Enter Watcher Passcode to Edit Labels:");
-                const sanitizedInput = (rawInput || "").trim().toUpperCase();
-                
-                if (sanitizedInput === DEFAULT_PASSCODE) {
-                    isLocked = false;
-                } else if (rawInput !== null) {
-                    alert("Incorrect Passcode!");
-                    return;
-                }
+            if (!isLabelsEditing) {
+                requireCommanderPin("edit Team Labels", () => {
+                    isLabelsEditing = true;
+                    renderTagInputs();
+                    showAppToast("Team Labels Editable");
+                });
             } else {
-                isLocked = true;
+                isLabelsEditing = false;
+                renderTagInputs();
             }
-
-            if (currentUser) {
-                updateDoc(sessionDocRef, { isLocked: isLocked }).catch(() => {});
-            }
-            renderTagInputs();
         }
 
         function handleTagInput(teamKey, value) {
@@ -1628,11 +2622,14 @@
         }
 
         function resetDefaultTags() {
-            teamConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-            saveTeamConfig();
-            renderTagInputs();
-            renderActionCluster();
-            updateDashboard();
+            requireCommanderPin("reset Team Labels", () => {
+                teamConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+                saveTeamConfig();
+                renderTagInputs();
+                renderActionCluster();
+                updateDashboard();
+                showAppToast("Team labels reset to defaults");
+            });
         }
 
         function renderTagInputs() {
@@ -1640,7 +2637,7 @@
             const lockLabel = document.getElementById('lock-label');
             const t = getActiveTranslation();
             
-            if (isLocked) {
+            if (!isLabelsEditing) {
                 lockIcon.className = 'fa-solid fa-lock text-xs text-amber-400';
                 lockLabel.innerText = t.editLabels;
             } else {
@@ -1655,7 +2652,7 @@
 
                 if (!container) return;
 
-                if (isLocked) {
+                if (!isLabelsEditing) {
                     container.innerHTML = tag 
                         ? `<span class="bg-amber-500/20 text-amber-400 font-display font-bold text-xs px-2 py-0.5 rounded border border-amber-500/30">(${tag})</span>`
                         : `<span class="text-slate-600 italic text-[11px]">(No Tag)</span>`;
@@ -1672,33 +2669,23 @@
                 const codeName = teamConfig[teamKey]?.codeName || `Team ${num}`;
                 const teamDisplayName = tag ? `${codeName.toUpperCase()} (${tag})` : codeName.toUpperCase();
 
-                if (instantBtnLabel) {
-                    instantBtnLabel.innerText = t.callTeamNow(teamDisplayName);
-                }
-
-                if (cancelBtnLabel) {
-                    cancelBtnLabel.innerText = t.cancelTeam(teamDisplayName);
-                }
+                if (instantBtnLabel) instantBtnLabel.innerText = t.callTeamNow(teamDisplayName);
+                if (cancelBtnLabel) cancelBtnLabel.innerText = t.cancelTeam(teamDisplayName);
             });
         }
 
         function getTeamLabel(teamKey) {
             if (!teamKey) return "";
-            
             const cleanKey = teamKey.toLowerCase().replace(/[^a-z0-9]/g, '');
             const config = teamConfig[cleanKey];
-            
             if (!config) {
                 const numMatch = cleanKey.match(/\d+/);
                 return numMatch ? `Team ${numMatch[0]}` : teamKey.toUpperCase();
             }
-
             let codeName = config.codeName || `Team ${cleanKey.replace('team', '')}`;
-            
             if (/^team\s+/i.test(codeName)) {
                 codeName = codeName.replace(/^team\s+/i, 'Team ');
             }
-            
             const tag = (config.allianceTag || "").trim();
             return tag ? `${codeName} (${tag})` : codeName;
         }
@@ -1718,14 +2705,37 @@
             } catch (e) {}
         }
 
-        // Single-Rally Timer Nudge Functions
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audio-icon');
+            const status = document.getElementById('audio-status');
+            const btn = document.getElementById('audio-btn');
+            const t = getActiveTranslation();
+
+            if (audioEnabled) {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(() => {});
+                }
+                startBackgroundAudioKeeper();
+                if (icon) icon.className = 'fa-solid fa-volume-high text-emerald-400';
+                if (status) status.innerText = t.audioOn;
+                if (btn) btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 whitespace-nowrap';
+                playBeep(880, 0.12);
+            } else {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                if (icon) icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                if (status) status.innerText = t.audioOff;
+                if (btn) btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800 transition flex items-center gap-2 whitespace-nowrap';
+            }
+        }
+
         function nudgePrepTime(threatId, deltaSec) {
             const t = threats.find(item => item.threatId === threatId);
             if (t) {
                 const shiftMs = deltaSec * 1000;
                 const now = Date.now();
-                const curPrepTarget = t.timer.prepTargetTime || (now + (t.timer.prepSec || 300) * 1000);
-                const curTravelTarget = t.timer.travelTargetTime || (curPrepTarget + (t.timer.travelSec || 30) * 1000);
+                const curPrepTarget = t.timer.prepTargetTime || (now + (t.timer.prepDurationSec || 300) * 1000);
+                const curTravelTarget = t.timer.travelTargetTime || (curPrepTarget + (t.timer.travelDurationSec || 30) * 1000);
 
                 const newPrepTarget = curPrepTarget + shiftMs;
                 const newTravelTarget = curTravelTarget + shiftMs;
@@ -1749,7 +2759,6 @@
                 const shiftMs = deltaSec * 1000;
                 const now = Date.now();
                 const curTravelTarget = t.timer.travelTargetTime || (now + (t.timer.travelSec || 30) * 1000);
-
                 const newTravelTarget = curTravelTarget + shiftMs;
 
                 if (currentUser) {
@@ -1775,18 +2784,23 @@
         }
 
         function clearAllThreats() {
-            if (currentUser) {
-                threats.forEach(t => {
-                    deleteDoc(doc(threatsCollRef, t.threatId)).catch(() => {});
+            requireCommanderPin("clear all active rallies", () => {
+                openConfirmModal("Clear All Active Rallies", "Remove all logged enemy and friendly rallies in this room?", () => {
+                    if (currentUser) {
+                        threats.forEach(t => {
+                            deleteDoc(doc(threatsCollRef, t.threatId)).catch(() => {});
+                        });
+                    } else {
+                        threats = [];
+                        if (masterInterval) {
+                            clearInterval(masterInterval);
+                            masterInterval = null;
+                        }
+                        updateDashboard();
+                    }
+                    showAppToast("All active rallies cleared");
                 });
-            } else {
-                threats = [];
-                if (masterInterval) {
-                    clearInterval(masterInterval);
-                    masterInterval = null;
-                }
-                updateDashboard();
-            }
+            });
         }
 
         function tick() {
@@ -1802,11 +2816,9 @@
             const now = Date.now();
             threats.forEach(t => {
                 const travelTarget = t.timer.travelTargetTime || now;
-                
                 if (now >= travelTarget && t.status !== "IMPACT_COMPLETE") {
                     t.status = "IMPACT_COMPLETE";
                 }
-
                 if (t.status === "IMPACT_COMPLETE") {
                     if (t.autoPurgeSec > 0) {
                         t.autoPurgeSec--;
@@ -1883,7 +2895,6 @@
                 card.className = `glass-panel p-4 rounded-2xl border ${themeBorder} flex flex-col gap-3 transition-opacity ${t.status === "IMPACT_COMPLETE" ? 'opacity-50 border-amber-500/40' : ''}`;
 
                 card.innerHTML = `
-                    <!-- Card Header -->
                     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                         <div class="flex items-center gap-2">
                             <span class="w-6 h-6 rounded-lg ${isEnemy ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} font-bold text-xs flex items-center justify-center border">#${index + 1}</span>
@@ -1897,10 +2908,7 @@
                         </button>
                     </div>
 
-                    <!-- Single Rally Telemetry Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        
-                        <!-- Rally Prep Window -->
                         <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
                             <div>
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">${tI18n.prepWindow}</div>
@@ -1915,7 +2923,6 @@
                             </div>
                         </div>
 
-                        <!-- March Travel Window -->
                         <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
                             <div>
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">${tI18n.marchWindow}</div>
@@ -1929,10 +2936,8 @@
                                 <button onclick="window.nudgeTravelTime('${t.threatId}', 5)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-blue-400 text-[10px] font-bold rounded">+5s</button>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- FOOTER: TOTAL ARRIVAL STATUS -->
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between gap-2 text-[11px] font-bold">
                         <span class="text-slate-400 uppercase flex items-center gap-1.5">
                             <i class="fa-solid fa-circle-dot text-amber-400 text-[8px] animate-ping"></i> ${tI18n.targetImpact}
@@ -1945,7 +2950,664 @@
             });
         }
 
-        // Attach global window bindings
+        // =====================================================================
+        // TAB 2 LOGIC: ALLIANCE MARCH ROSTER & CUSTOM SYNC QUEUE ENGINE
+        // =====================================================================
+        async function saveRosterEntry(event) {
+            event.preventDefault();
+            const nameInput = document.getElementById('roster-player-name');
+            const secInput = document.getElementById('roster-march-sec');
+            const roleInput = document.getElementById('roster-role-tag');
+            if (!nameInput || !secInput) return;
+
+            const playerName = nameInput.value.trim();
+            const marchSec = parseInt(secInput.value, 10);
+            const roleTag = roleInput ? roleInput.value : 'Solo';
+
+            if (!playerName || isNaN(marchSec) || marchSec < 1) return;
+
+            const docId = playerName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const entry = {
+                playerName,
+                marchSec,
+                roleTag,
+                updatedAt: Date.now()
+            };
+
+            nameInput.value = '';
+            secInput.value = '';
+
+            if (currentUser) {
+                try {
+                    await setDoc(doc(rosterCollRef, docId), entry);
+                    showAppToast(`Saved ${playerName} (${marchSec}s) to Alliance Roster`);
+                } catch (err) {}
+            } else {
+                const existingIdx = allianceRoster.findIndex(r => r.id === docId);
+                if (existingIdx >= 0) allianceRoster[existingIdx] = { id: docId, ...entry };
+                else allianceRoster.push({ id: docId, ...entry });
+                renderRosterList();
+                renderCustomSlotInputs();
+                showAppToast(`Saved ${playerName} (${marchSec}s) locally`);
+            }
+        }
+
+        function removeRosterEntry(docId) {
+            const target = allianceRoster.find(r => r.id === docId);
+            const name = target ? target.playerName : "this player";
+            requireCommanderPin(`remove ${name} from Roster`, () => {
+                openConfirmModal("Remove Player", `Remove ${name} from the Alliance March Roster?`, async () => {
+                    if (currentUser) {
+                        await deleteDoc(doc(rosterCollRef, docId)).catch(() => {});
+                    } else {
+                        allianceRoster = allianceRoster.filter(r => r.id !== docId);
+                        renderRosterList();
+                        renderCustomSlotInputs();
+                    }
+                    showAppToast("Player removed from roster");
+                });
+            });
+        }
+
+        function clearAllRoster() {
+            requireCommanderPin("clear the entire Alliance Roster", () => {
+                openConfirmModal("Clear Alliance Roster", "Delete all logged player march times in this room?", () => {
+                    if (currentUser) {
+                        allianceRoster.forEach(r => {
+                            deleteDoc(doc(rosterCollRef, r.id)).catch(() => {});
+                        });
+                    } else {
+                        allianceRoster = [];
+                        renderRosterList();
+                        renderCustomSlotInputs();
+                    }
+                    showAppToast("Alliance roster cleared");
+                });
+            });
+        }
+
+        function editRosterEntry(docId) {
+            const entry = allianceRoster.find(r => r.id === docId);
+            if (!entry) return;
+            const nameInput = document.getElementById('roster-player-name');
+            const secInput = document.getElementById('roster-march-sec');
+            const roleInput = document.getElementById('roster-role-tag');
+            if (nameInput) nameInput.value = entry.playerName || '';
+            if (secInput) secInput.value = entry.marchSec || '';
+            if (roleInput && entry.roleTag) roleInput.value = entry.roleTag;
+            nameInput?.focus();
+            showAppToast(`Loaded ${entry.playerName} for editing`);
+        }
+
+        function renderRosterList() {
+            const container = document.getElementById('roster-list-container');
+            const badge = document.getElementById('roster-count-badge');
+            const t = getActiveTranslation();
+            if (badge) badge.innerText = t.rosterLoggedBadge(allianceRoster.length);
+            if (!container) return;
+
+            if (allianceRoster.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-500 italic">No player march times logged yet. Add players above to populate dropdowns.</span>`;
+                return;
+            }
+
+            container.innerHTML = allianceRoster.map(r => `
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs">
+                    <button type="button" onclick="window.editRosterEntry('${r.id}')" class="flex items-center gap-1.5 text-left hover:text-sky-300 transition" title="Click to edit march time">
+                        <span class="font-bold text-white">${r.playerName}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold text-[11px]">${r.marchSec}s</span>
+                        <span class="text-[10px] text-slate-400">(${r.roleTag || 'Solo'})</span>
+                    </button>
+                    <button type="button" onclick="window.removeRosterEntry('${r.id}')" class="text-slate-500 hover:text-red-400 pl-1 border-l border-slate-800" title="Commander PIN Required: Remove Player">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function persistCustomSyncState() {
+            if (!currentUser) return;
+            updateDoc(sessionDocRef, {
+                customSyncState: {
+                    slots: customSlots,
+                    tImpact: customTImpact || null,
+                    tRallyStart: customTRallyStart || null,
+                    updatedAt: Date.now()
+                }
+            }).catch(() => {});
+        }
+
+        function syncCustomTimerInputsDisplay() {
+            const m = Math.floor(customTimerSec / 60);
+            const s = customTimerSec % 60;
+            const minInput = document.getElementById('custom-timer-min-input');
+            const secInput = document.getElementById('custom-timer-sec-input');
+            if (minInput) minInput.value = String(m).padStart(2, '0');
+            if (secInput) secInput.value = String(s).padStart(2, '0');
+        }
+
+        function setCustomTimerFromInputs() {
+            const minInput = document.getElementById('custom-timer-min-input');
+            const secInput = document.getElementById('custom-timer-sec-input');
+            const mins = Math.max(0, Math.min(59, parseInt(minInput?.value, 10) || 0));
+            const secs = Math.max(0, Math.min(59, parseInt(secInput?.value, 10) || 0));
+            customTimerSec = Math.max(1, (mins * 60) + secs);
+            syncCustomTimerInputsDisplay();
+        }
+
+        function adjustCustomTimer(delta) {
+            customTimerSec = Math.max(1, customTimerSec + delta);
+            syncCustomTimerInputsDisplay();
+        }
+
+        function getMaxCustomSpanSec() {
+            let maxLead = 0;
+            customSlots.forEach(s => {
+                const lead = (Number(s.prepSec) || 0) + (Number(s.marchSec) || 0) - (Number(s.offsetSec) || 0);
+                if (lead > maxLead) maxLead = lead;
+            });
+            return maxLead || 10;
+        }
+
+        function formatEpochForDatetimeLocal(epochMs) {
+            const d = new Date(epochMs);
+            return customUseUTC
+                ? d.toISOString().slice(0, 19)
+                : new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
+        }
+
+        function populateCustomTargetDefault() {
+            const earliestMs = Date.now() + (getMaxCustomSpanSec() * 1000) + 2000;
+            const input = document.getElementById('custom-target-input');
+            const hint = document.getElementById('custom-earliest-impact-hint');
+            if (input) {
+                input.min = formatEpochForDatetimeLocal(Date.now() + (getMaxCustomSpanSec() * 1000));
+                input.value = formatEpochForDatetimeLocal(earliestMs);
+            }
+            if (hint) {
+                hint.innerText = formatCustomTimestamp(earliestMs);
+            }
+        }
+
+        function validateCustomTargetInput() {
+            const input = document.getElementById('custom-target-input');
+            const hint = document.getElementById('custom-earliest-impact-hint');
+            const minMs = Date.now() + (getMaxCustomSpanSec() * 1000);
+            if (input) input.min = formatEpochForDatetimeLocal(minMs);
+            if (hint) hint.innerText = formatCustomTimestamp(minMs);
+
+            if (!input || !input.value) return;
+            const chosenMs = customUseUTC ? new Date(input.value + 'Z').getTime() : new Date(input.value).getTime();
+            if (isNaN(chosenMs) || chosenMs < minMs) {
+                populateCustomTargetDefault();
+                showAppToast("Adjusted to earliest possible impact time based on longest march", true);
+            }
+        }
+
+        function toggleCustomTimezone() {
+            customUseUTC = !customUseUTC;
+            const txt = document.getElementById('custom-tz-text');
+            const lbl = document.getElementById('custom-target-label');
+            if (txt) txt.innerText = customUseUTC ? 'UTC' : 'Local';
+            if (lbl) lbl.innerText = customUseUTC ? 'Target Impact Time (UTC)' : 'Target Impact Time (Local)';
+            if (customPath === 'time') populateCustomTargetDefault();
+            calculateCustomSync();
+        }
+
+        function setCustomPath(path) {
+            customPath = path;
+            document.getElementById('custom-path-now').className = path === 'now'
+                ? 'py-2 px-1 rounded-lg text-[11px] font-bold text-white bg-purple-900/70 border border-purple-500/40 transition'
+                : 'py-2 px-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition';
+            document.getElementById('custom-path-timer').className = path === 'timer'
+                ? 'py-2 px-1 rounded-lg text-[11px] font-bold text-white bg-purple-900/70 border border-purple-500/40 transition'
+                : 'py-2 px-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition';
+            document.getElementById('custom-path-time').className = path === 'time'
+                ? 'py-2 px-1 rounded-lg text-[11px] font-bold text-white bg-purple-900/70 border border-purple-500/40 transition'
+                : 'py-2 px-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition';
+
+            document.getElementById('custom-timer-box')?.classList.toggle('hidden', path !== 'timer');
+            document.getElementById('custom-time-box')?.classList.toggle('hidden', path !== 'time');
+
+            if (path === 'time') populateCustomTargetDefault();
+        }
+
+        function renderCustomSlotInputs() {
+            const container = document.getElementById('custom-slots-list');
+            if (!container) return;
+            const t = getActiveTranslation();
+
+            container.innerHTML = customSlots.map((slot, idx) => {
+                const isRally = slot.type === 'rally';
+                const rosterOptions = allianceRoster.map(r =>
+                    `<option value="${r.id}" ${slot.rosterId === r.id ? 'selected' : ''}>${r.playerName} (${r.marchSec}s - ${r.roleTag || 'Solo'})</option>`
+                ).join('');
+
+                return `
+                    <div class="p-3 bg-slate-900/90 rounded-xl border ${isRally ? 'border-amber-500/30' : 'border-slate-800'} space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 flex-grow min-w-0">
+                                <i class="fa-solid ${isRally ? 'fa-crown text-amber-400' : 'fa-jet-fighter text-sky-400'} text-xs shrink-0"></i>
+                                <input type="text" value="${slot.title}" onchange="window.updateCustomSlot('${slot.id}', 'title', this.value)"
+                                    class="w-full bg-transparent border-b border-slate-700 text-xs font-bold text-white focus:outline-none focus:border-sky-400">
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" onclick="window.moveCustomSlot(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="px-1.5 py-1 rounded bg-slate-800 text-[10px] text-slate-300 disabled:opacity-30"><i class="fa-solid fa-arrow-up"></i></button>
+                                <button type="button" onclick="window.moveCustomSlot(${idx}, 1)" ${idx === customSlots.length - 1 ? 'disabled' : ''} class="px-1.5 py-1 rounded bg-slate-800 text-[10px] text-slate-300 disabled:opacity-30"><i class="fa-solid fa-arrow-down"></i></button>
+                                <button type="button" onclick="window.deleteCustomSlot('${slot.id}')" class="px-1.5 py-1 rounded bg-red-950/60 text-[10px] text-red-400 hover:text-red-300 ml-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-sky-400 mb-1">${t.assignRosterLbl}</label>
+                            <select onchange="window.assignSlotFromRoster('${slot.id}', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-400">
+                                <option value="">${t.assignRosterDefault}</option>
+                                ${rosterOptions}
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 text-[10px]">
+                            <div>
+                                <label class="text-slate-400 block mb-0.5">${t.slotTypeLbl}</label>
+                                <select onchange="window.updateCustomSlot('${slot.id}', 'type', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono">
+                                    <option value="solo" ${slot.type === 'solo' ? 'selected' : ''}>Solo (0m)</option>
+                                    <option value="rally" ${slot.type === 'rally' ? 'selected' : ''}>Rally (5m)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-0.5">${t.slotMarchLbl}</label>
+                                <input type="number" min="1" max="1800" value="${slot.marchSec}" onchange="window.updateCustomSlot('${slot.id}', 'marchSec', parseFloat(this.value) || 1)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-amber-400 font-mono font-bold">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-0.5">${t.slotOffsetLbl}</label>
+                                <input type="number" step="0.1" value="${slot.offsetSec}" onchange="window.updateCustomSlot('${slot.id}', 'offsetSec', parseFloat(this.value) || 0)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-purple-300 font-mono font-bold">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function assignSlotFromRoster(slotId, rosterId) {
+            const slot = customSlots.find(s => s.id === slotId);
+            if (!slot) return;
+            slot.rosterId = rosterId;
+            if (rosterId) {
+                const player = allianceRoster.find(r => r.id === rosterId);
+                if (player) {
+                    slot.marchSec = Number(player.marchSec) || 10;
+                    const rolePrefix = slot.type === 'rally' ? 'Rally' : 'Solo';
+                    slot.title = `${player.playerName} (${rolePrefix})`;
+                }
+            } else {
+                const slotNum = customSlots.findIndex(s => s.id === slotId) + 1;
+                slot.title = slot.type === 'rally' ? `Rally ${slotNum}` : `Solo ${slotNum}`;
+            }
+            renderCustomSlotInputs();
+            if (customPath === 'time') validateCustomTargetInput();
+            calculateCustomSync();
+            persistCustomSyncState();
+        }
+
+        function addCustomSlot(type) {
+            const isRally = type === 'rally';
+            customSlots.push({
+                id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                type,
+                rosterId: '',
+                title: isRally ? `Rally ${customSlots.length + 1}` : `Solo ${customSlots.length + 1}`,
+                prepSec: isRally ? 300 : 0,
+                marchSec: 10,
+                offsetSec: 0
+            });
+            renderCustomSlotInputs();
+            if (customPath === 'time') validateCustomTargetInput();
+            calculateCustomSync();
+            persistCustomSyncState();
+        }
+
+        function updateCustomSlot(slotId, field, value) {
+            const slot = customSlots.find(s => s.id === slotId);
+            if (!slot) return;
+            if (field === 'type') {
+                slot.type = value;
+                slot.prepSec = value === 'rally' ? 300 : 0;
+                if (slot.rosterId) {
+                    const player = allianceRoster.find(r => r.id === slot.rosterId);
+                    if (player) {
+                        slot.title = `${player.playerName} (${value === 'rally' ? 'Rally' : 'Solo'})`;
+                    }
+                }
+            } else {
+                slot[field] = value;
+                if (field === 'title' || field === 'marchSec') {
+                    slot.rosterId = '';
+                }
+            }
+            renderCustomSlotInputs();
+            if (customPath === 'time') validateCustomTargetInput();
+            calculateCustomSync();
+            persistCustomSyncState();
+        }
+
+        function deleteCustomSlot(slotId) {
+            customSlots = customSlots.filter(s => s.id !== slotId);
+            renderCustomSlotInputs();
+            if (customPath === 'time') validateCustomTargetInput();
+            calculateCustomSync();
+            persistCustomSyncState();
+        }
+
+        function resetCustomSlotsToDefault() {
+            customSlots = getDefaultCustomSlots();
+            renderCustomSlotInputs();
+            if (customPath === 'time') validateCustomTargetInput();
+            calculateCustomSync();
+            persistCustomSyncState();
+            showAppToast("Slots reset to 2 Rallies (0s offset)");
+        }
+
+        function moveCustomSlot(index, direction) {
+            const target = index + direction;
+            if (target < 0 || target >= customSlots.length) return;
+            const tmp = customSlots[index];
+            customSlots[index] = customSlots[target];
+            customSlots[target] = tmp;
+            renderCustomSlotInputs();
+            calculateCustomSync();
+            persistCustomSyncState();
+        }
+
+        function triggerCustomQueue() {
+            const maxLeadSec = getMaxCustomSpanSec();
+            const now = Date.now();
+            lastCustomBeeped = {};
+
+            if (customPath === 'now') {
+                customTImpact = now + (maxLeadSec * 1000);
+                customTRallyStart = now;
+            } else if (customPath === 'timer') {
+                setCustomTimerFromInputs();
+                customTImpact = now + (customTimerSec * 1000) + (maxLeadSec * 1000);
+                customTRallyStart = now + (customTimerSec * 1000);
+            } else if (customPath === 'time') {
+                const val = document.getElementById('custom-target-input')?.value;
+                const minMs = now + (maxLeadSec * 1000);
+                let targetMs = val
+                    ? (customUseUTC ? new Date(val + 'Z').getTime() : new Date(val).getTime())
+                    : minMs;
+                if (isNaN(targetMs) || targetMs < minMs) {
+                    targetMs = minMs;
+                    populateCustomTargetDefault();
+                    showAppToast("Target time clamped to earliest valid lead time", true);
+                }
+                customTImpact = targetMs;
+                customTRallyStart = customTImpact - (maxLeadSec * 1000);
+            }
+
+            calculateCustomSync();
+            persistCustomSyncState();
+            copyCustomOrder('compact');
+            playBeep(660, 0.18);
+        }
+
+        function resetCustomQueue() {
+            requireCommanderPin("clear active sync triggers", () => {
+                openConfirmModal("Clear Active Triggers", "Reset and clear all active sync countdowns in this room?", () => {
+                    customTImpact = null;
+                    customTRallyStart = null;
+                    customTriggers = {};
+                    lastCustomCardsSignature = '';
+                    activePipCustomTriggerId = null;
+                    calculateCustomSync();
+                    renderPiPCanvas();
+                    persistCustomSyncState();
+                    showAppToast("Custom queue timers cleared");
+                });
+            });
+        }
+
+        function formatCustomTimestamp(ms) {
+            if (!ms) return '--:--:--';
+            const d = new Date(ms);
+            if (customUseUTC) {
+                return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}:${String(d.getUTCSeconds()).padStart(2, '0')} UTC`;
+            }
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')} Local`;
+        }
+
+        function calculateCustomSync() {
+            const impactEl = document.getElementById('custom-impact-display');
+            const startEl = document.getElementById('custom-start-display');
+            const t = getActiveTranslation();
+
+            if (!customTImpact) {
+                customTriggers = {};
+                if (impactEl) impactEl.innerText = t.awaitingQueue;
+                if (startEl) startEl.innerText = '--:--:--';
+                renderCustomCards(Date.now());
+                return;
+            }
+
+            customTriggers = {};
+            let earliestStart = Infinity;
+
+            customSlots.forEach(s => {
+                const totalSpanSec = (Number(s.prepSec) || 0) + (Number(s.marchSec) || 0);
+                const triggerMs = customTImpact + ((Number(s.offsetSec) || 0) * 1000) - (totalSpanSec * 1000);
+                if (triggerMs < earliestStart) earliestStart = triggerMs;
+
+                customTriggers[s.id] = {
+                    id: s.id,
+                    type: s.type,
+                    title: s.title,
+                    triggerMs: triggerMs,
+                    badge: `${s.marchSec}s | ${s.offsetSec >= 0 ? '+' : ''}${s.offsetSec}s`
+                };
+            });
+
+            if (impactEl) impactEl.innerText = formatCustomTimestamp(customTImpact);
+            if (startEl) startEl.innerText = earliestStart !== Infinity ? formatCustomTimestamp(earliestStart) : '--:--:--';
+            renderCustomCards(Date.now());
+        }
+
+        function speakCustomSlotLaunch(title, type) {
+            if (!audioEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const actionWord = type === 'rally' ? 'Open Rally Now!' : 'Launch March Now!';
+            const msg = new SpeechSynthesisUtterance(`${title}, ${actionWord}`);
+            msg.lang = currentLang === 'auto' ? (navigator.language || 'en-US') : currentLang;
+            msg.rate = 1.25;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function renderCustomCards(now) {
+            const container = document.getElementById('custom-cards-list');
+            if (!container) return;
+            const tI18n = getActiveTranslation();
+
+            const sorted = Object.values(customTriggers).sort((a, b) => a.triggerMs - b.triggerMs);
+
+            if (sorted.length === 0) {
+                if (lastCustomCardsSignature !== 'EMPTY') {
+                    container.innerHTML = `
+                        <div class="glass-panel rounded-2xl p-6 text-center border border-slate-800">
+                            <i class="fa-solid fa-hourglass-start text-2xl text-slate-600 mb-2"></i>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">${tI18n.noActiveQueueTitle}</div>
+                            <div class="text-[11px] text-slate-500 mt-1">${tI18n.noActiveQueueSub}</div>
+                        </div>
+                    `;
+                    lastCustomCardsSignature = 'EMPTY';
+                }
+                return;
+            }
+
+            const sig = sorted.map(t => `${t.id}_${t.title}_${t.badge}_${t.triggerMs}_${customUseUTC}`).join('|');
+            if (sig !== lastCustomCardsSignature) {
+                container.innerHTML = sorted.map(t => {
+                    const isRally = t.type === 'rally';
+                    return `
+                        <div id="ccard_${t.id}" class="glass-panel rounded-2xl p-4 border border-slate-800 transition-all">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-10 h-10 shrink-0 rounded-xl border flex items-center justify-center text-sm ${isRally ? 'bg-amber-500/15 border-amber-500/40 text-amber-400' : 'bg-sky-500/15 border-sky-500/40 text-sky-400'}">
+                                        <i class="fa-solid ${isRally ? 'fa-crown' : 'fa-jet-fighter'}"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm text-white flex flex-wrap items-center gap-2">
+                                            <span class="truncate">${t.title}</span>
+                                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">${t.badge}</span>
+                                        </div>
+                                        <div class="text-xs text-slate-400 font-mono mt-1 flex flex-wrap items-center gap-2">
+                                            <span>Launch: <strong class="text-slate-200">${formatCustomTimestamp(t.triggerMs)}</strong></span>
+                                            <button type="button" onclick="window.launchCustomPipTimer('${t.id}')" class="px-2 py-0.5 rounded bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-500/40 text-[10px] font-bold transition inline-flex items-center gap-1">
+                                                <i class="fa-solid fa-up-right-from-square text-[9px]"></i> ${tI18n.popOutPip}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div id="ccard_${t.id}_count" class="text-2xl font-black font-mono text-slate-200">00:00.0</div>
+                                    <div id="ccard_${t.id}_status" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">WAITING</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                lastCustomCardsSignature = sig;
+            }
+
+            sorted.forEach(t => {
+                const cardEl = document.getElementById(`ccard_${t.id}`);
+                const countEl = document.getElementById(`ccard_${t.id}_count`);
+                const statusEl = document.getElementById(`ccard_${t.id}_status`);
+                if (!cardEl || !countEl || !statusEl) return;
+
+                const diff = t.triggerMs - now;
+                if (diff > 0) {
+                    const totalSec = diff / 1000;
+                    const mins = Math.floor(totalSec / 60);
+                    const secs = (totalSec % 60).toFixed(1);
+                    countEl.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(4, '0')}`;
+
+                    if (diff <= 3000) {
+                        cardEl.className = 'glass-panel rounded-2xl p-4 border-2 border-amber-400 bg-amber-500/15 animate-pulse transition-all';
+                        statusEl.innerText = `🚨 LAUNCH IN ${(diff / 1000).toFixed(1)}s!`;
+                        statusEl.className = 'text-[10px] font-extrabold text-amber-300 uppercase tracking-wider';
+                        const secKey = Math.ceil(diff / 1000);
+                        if (!lastCustomBeeped[t.id + '_' + secKey]) {
+                            playBeep(secKey === 1 ? 1046 : 784, 0.08);
+                            lastCustomBeeped[t.id + '_' + secKey] = true;
+                        }
+                    } else if (diff <= 15000) {
+                        cardEl.className = 'glass-panel rounded-2xl p-4 border border-amber-500/50 bg-amber-950/30 transition-all';
+                        statusEl.innerText = 'PREP IN-GAME: HOVER DEPLOY';
+                        statusEl.className = 'text-[10px] font-bold text-amber-300 uppercase tracking-wider';
+                    } else {
+                        cardEl.className = 'glass-panel rounded-2xl p-4 border border-slate-800 transition-all';
+                        statusEl.innerText = 'WAITING FOR DISPATCH';
+                        statusEl.className = 'text-[10px] font-bold text-slate-400 uppercase tracking-wider';
+                    }
+                } else if (diff > -4000) {
+                    countEl.innerText = '00:00.0';
+                    cardEl.className = 'glass-panel rounded-2xl p-4 border-2 border-emerald-400 bg-emerald-500/20 transition-all';
+                    statusEl.innerText = '⚡ LAUNCH NOW! ⚡';
+                    statusEl.className = 'text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider';
+                    if (!lastCustomBeeped[t.id + '_GO']) {
+                        lastCustomBeeped[t.id + '_GO'] = true;
+                        speakCustomSlotLaunch(t.title, t.type);
+                    }
+                } else {
+                    countEl.innerText = '00:00.0';
+                    cardEl.className = 'glass-panel rounded-2xl p-4 border border-slate-800 opacity-60 transition-all';
+                    statusEl.innerText = 'MARCH IN FLIGHT';
+                    statusEl.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-wider';
+                }
+            });
+        }
+
+        function copyCustomOrder(type) {
+            const fmtUtc = (ms) => {
+                if (!ms) return 'N/A';
+                const d = new Date(ms);
+                return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}:${String(d.getUTCSeconds()).padStart(2, '0')} UTC`;
+            };
+
+            const activeList = customSlots.filter(s => customTriggers[s.id]);
+            if (activeList.length === 0) {
+                showAppToast("Generate a queue first before copying UTC orders", true);
+                return;
+            }
+
+            let text = '';
+            if (type === 'compact') {
+                text = `⚔️ [SYNC ORDERS]\n` +
+                    activeList.map(s => `• ${s.title}: ${fmtUtc(customTriggers[s.id].triggerMs)}`).join('\n') +
+                    `\nImpact: ${fmtUtc(customTImpact)}`;
+            } else if (type === 'rally') {
+                const rallies = activeList.filter(s => s.type === 'rally');
+                text = rallies.length > 0
+                    ? rallies.map(r => `👑 ${r.title.toUpperCase()} START: ${fmtUtc(customTriggers[r.id].triggerMs)} (5m Prep)`).join('\n')
+                    : 'No rally slots in current queue.';
+            } else if (type === 'solos') {
+                const solos = activeList.filter(s => s.type === 'solo');
+                text = solos.length > 0
+                    ? `🚀 [SOLO DISPATCH TIMES]\n` + solos.map(s => `• ${s.title}: ${fmtUtc(customTriggers[s.id].triggerMs)}`).join('\n')
+                    : 'No solo slots in current queue.';
+            } else {
+                text = `🛠️ [ALLIANCE CUSTOM SYNC ORDERS]\n` +
+                    activeList.map(s => `• ${s.title}: Launch at ${fmtUtc(customTriggers[s.id].triggerMs)} (March: ${s.marchSec}s | Offset: ${s.offsetSec >= 0 ? '+' : ''}${s.offsetSec}s)`).join('\n') +
+                    `\nTARGET IMPACT: ${fmtUtc(customTImpact)}`;
+            }
+
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                showAppToast("UTC Orders copied to clipboard!");
+            } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        // Attach Global Window Bindings
+        window.switchToRoom = switchToRoom;
+        window.copyRoomLink = copyRoomLink;
+        window.openCreateRoomModal = openCreateRoomModal;
+        window.closeCreateRoomModal = closeCreateRoomModal;
+        window.submitCreateRoomModal = submitCreateRoomModal;
+        window.toggleCommanderSession = toggleCommanderSession;
+        window.openPasscodeModal = openPasscodeModal;
+        window.closePasscodeModal = closePasscodeModal;
+        window.submitPasscodeModal = submitPasscodeModal;
+        window.openConfirmModal = openConfirmModal;
+        window.closeConfirmModal = closeConfirmModal;
+        window.submitConfirmModal = submitConfirmModal;
+        window.editRosterEntry = editRosterEntry;
+        window.switchMainTab = switchMainTab;
+        window.saveRosterEntry = saveRosterEntry;
+        window.removeRosterEntry = removeRosterEntry;
+        window.clearAllRoster = clearAllRoster;
+        window.toggleCustomTimezone = toggleCustomTimezone;
+        window.setCustomPath = setCustomPath;
+        window.adjustCustomTimer = adjustCustomTimer;
+        window.setCustomTimerFromInputs = setCustomTimerFromInputs;
+        window.populateCustomTargetDefault = populateCustomTargetDefault;
+        window.validateCustomTargetInput = validateCustomTargetInput;
+        window.addCustomSlot = addCustomSlot;
+        window.assignSlotFromRoster = assignSlotFromRoster;
+        window.updateCustomSlot = updateCustomSlot;
+        window.deleteCustomSlot = deleteCustomSlot;
+        window.resetCustomSlotsToDefault = resetCustomSlotsToDefault;
+        window.moveCustomSlot = moveCustomSlot;
+        window.triggerCustomQueue = triggerCustomQueue;
+        window.resetCustomQueue = resetCustomQueue;
+        window.copyCustomOrder = copyCustomOrder;
+        window.launchCustomPipTimer = launchCustomPipTimer;
+
         window.setLanguage = setLanguage;
         window.toggleAudio = toggleAudio;
         window.togglePiPHUD = togglePiPHUD;
@@ -1966,30 +3628,26 @@
         window.nudgePrepTime = nudgePrepTime;
         window.nudgeTravelTime = nudgeTravelTime;
 
+        // Start 100ms Custom Sync Countdown Loop
+        customTickInterval = setInterval(() => {
+            if (customTImpact) {
+                renderCustomCards(Date.now());
+            }
+            if (activeMainTab === 'custom' && customPath === 'time') {
+                const minMs = Date.now() + (getMaxCustomSpanSec() * 1000);
+                const input = document.getElementById('custom-target-input');
+                const hint = document.getElementById('custom-earliest-impact-hint');
+                if (input) input.min = formatEpochForDatetimeLocal(minMs);
+                if (hint) hint.innerText = formatCustomTimestamp(minMs);
+            }
+        }, 100);
+
+        updateRoomHeaderUI();
+        updateCommanderSessionUI();
+        syncCustomTimerInputsDisplay();
         applyLanguageUI();
-
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const notifyBtn = document.getElementById('notify-btn');
-            if (notifyBtn) {
-                notifyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5 whitespace-nowrap';
-                notifyBtn.innerHTML = '<i class="fa-solid fa-bell text-xs"></i><span id="ui-notify-status">Alerts Active</span>';
-            }
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume().catch(() => {});
-                }
-                if ('speechSynthesis' in window && window.speechSynthesis.speaking === false) {
-                    const silentPing = new SpeechSynthesisUtterance('');
-                    silentPing.volume = 0;
-                    window.speechSynthesis.speak(silentPing);
-                }
-            } else {
-                startBackgroundAudioKeeper();
-            }
-        });
+        renderRosterList();
+        renderCustomSlotInputs();
     </script>
 </body>
 </html>
